@@ -1600,13 +1600,24 @@
             return result;
         }
 
+        // Convert column names to readable display names
+        // e.g. "PurchaseContractDate" → "Purchase Contract Date"
+        // e.g. "Lot_Size_SF" → "Lot Size SF"
+        // e.g. "GLA" → "GLA"
+        function displayName(col) {
+            return col
+                .replace(/_/g, ' ')                          // underscores → spaces
+                .replace(/([a-z])([A-Z])/g, '$1 $2')        // camelCase → spaces
+                .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2'); // ABCDef → ABC Def
+        }
+
         function displayPreview() {
             rowCount.textContent = rawData.length;
             
             let html = '<thead><tr>';
             headers.forEach(h => {
                 const isNumeric = numericColumns.includes(h);
-                html += `<th>${h} ${isNumeric ? '📊' : '📝'}</th>`;
+                html += `<th>${displayName(h)} ${isNumeric ? '📊' : '📝'}</th>`;
             });
             html += '</tr></thead><tbody>';
             
@@ -1634,14 +1645,14 @@
             dependentList.innerHTML = numericColumns.map(col => `
                 <div class="variable-item" onclick="selectDependent('${col}')">
                     <input type="radio" name="dependent" id="dep_${col}" value="${col}">
-                    <label for="dep_${col}">${col}</label>
+                    <label for="dep_${col}">${displayName(col)}</label>
                 </div>
             `).join('');
 
             independentList.innerHTML = numericColumns.map(col => `
                 <div class="variable-item" onclick="toggleIndependent('${col}')">
                     <input type="checkbox" id="ind_${col}" value="${col}">
-                    <label for="ind_${col}">${col}</label>
+                    <label for="ind_${col}">${displayName(col)}</label>
                 </div>
             `).join('');
 
@@ -1710,7 +1721,7 @@
                 selectionHint.textContent = 'Select at least one independent variable (predictor)';
                 selectionHint.style.color = '#808080';
             } else {
-                selectionHint.textContent = `Ready! Predicting ${selectedDependent} using ${selectedIndependent.length} variable(s)`;
+                selectionHint.textContent = `Ready! Predicting ${displayName(selectedDependent)} using ${selectedIndependent.length} variable(s)`;
                 selectionHint.style.color = '#4ade80';
             }
         }
