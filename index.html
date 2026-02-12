@@ -1603,15 +1603,34 @@
         // Columns that should be excluded from variable selection
         // (IDs, dates, codes, and non-property-characteristic fields)
         const excludePatterns = [
+            // IDs and codes
             /parcel/i, /apn/i, /mls.*number/i, /mls.*area/i, /mls.*id/i,
             /listing.*id/i, /record.*id/i, /tax.*id/i, /folio/i,
-            /contract.*date/i, /listing.*date/i, /closing.*date/i, 
-            /ending.*date/i, /expir/i, /dom\b/i, /cdom/i,
             /^id$/i, /^key$/i, /^row/i, /^index/i,
             /zip\s*code/i, /postal/i, /census/i, /fips/i,
-            /latitude/i, /longitude/i, /^lat$/i, /^lon/i, /^lng$/i,
-            /photo.*count/i, /virtual.*tour/i, /status/i,
             /agent.*id/i, /office.*id/i, /broker/i,
+            // Dates and timestamps
+            /contract.*date/i, /listing.*date/i, /closing.*date/i,
+            /ending.*date/i, /expir.*date/i, /off\s*market.*date/i,
+            /on\s*market/i, /status.*change/i, /modification/i,
+            /timestamp/i,
+            // DOM
+            /dom\b/i, /cdom/i,
+            // Location coords
+            /latit/i, /longit/i, /^lat$/i, /^lon/i, /^lng$/i,
+            // Listing fields (List Price, List Date, List Agent, etc.)
+            /^list/i,
+            // Photos, tours, showings
+            /photo/i, /virtual.*tour/i, /showing/i, /open\s*house/i,
+            // Buyer fields
+            /^buyer/i,
+            // Contact info
+            /phone/i, /email/i, /contact/i,
+            // Street number as standalone numeric (not useful as predictor)
+            /street.*number.*numeric/i, /street.*num/i,
+            // Status fields
+            /^status/i, /contract.*status/i,
+            // Original list
             /original.*list/i, /list.*number/i
         ];
 
