@@ -1600,6 +1600,25 @@
             return result;
         }
 
+        // Columns that should be excluded from variable selection
+        // (IDs, dates, codes, and non-property-characteristic fields)
+        const excludePatterns = [
+            /parcel/i, /apn/i, /mls.*number/i, /mls.*area/i, /mls.*id/i,
+            /listing.*id/i, /record.*id/i, /tax.*id/i, /folio/i,
+            /contract.*date/i, /listing.*date/i, /closing.*date/i, 
+            /ending.*date/i, /expir/i, /dom\b/i, /cdom/i,
+            /^id$/i, /^key$/i, /^row/i, /^index/i,
+            /zip\s*code/i, /postal/i, /census/i, /fips/i,
+            /latitude/i, /longitude/i, /^lat$/i, /^lon/i, /^lng$/i,
+            /photo.*count/i, /virtual.*tour/i, /status/i,
+            /agent.*id/i, /office.*id/i, /broker/i,
+            /original.*list/i, /list.*number/i
+        ];
+
+        function shouldIncludeVariable(colName) {
+            return !excludePatterns.some(pattern => pattern.test(colName));
+        }
+
         // Convert column names to readable display names
         // e.g. "PurchaseContractDate" → "Purchase Contract Date"
         // e.g. "Lot_Size_SF" → "Lot Size SF"
@@ -1642,6 +1661,7 @@
         }
 
         function setupVariableSelection() {
+            // Dependent: show all numeric columns (user may want to predict any)
             dependentList.innerHTML = numericColumns.map(col => `
                 <div class="variable-item" onclick="selectDependent('${col}')">
                     <input type="radio" name="dependent" id="dep_${col}" value="${col}">
@@ -1649,12 +1669,30 @@
                 </div>
             `).join('');
 
-            independentList.innerHTML = numericColumns.map(col => `
+            // Independent: filter out non-property-characteristic columns
+            const relevantColumns = numericColumns.filter(shouldIncludeVariable);
+            const excludedColumns = numericColumns.filter(c => !shouldIncludeVariable(c));
+            
+            independentList.innerHTML = relevantColumns.map(col => `
                 <div class="variable-item" onclick="toggleIndependent('${col}')">
                     <input type="checkbox" id="ind_${col}" value="${col}">
                     <label for="ind_${col}">${displayName(col)}</label>
                 </div>
-            `).join('');
+            `).join('') + (excludedColumns.length > 0 ? `
+                <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <p style="font-size: 12px; color: #808080; cursor: pointer;" onclick="document.getElementById('excludedVars').classList.toggle('hidden')">
+                        ▸ ${excludedColumns.length} field(s) hidden (IDs, dates, codes) — click to show
+                    </p>
+                    <div id="excludedVars" class="hidden">
+                        ${excludedColumns.map(col => `
+                            <div class="variable-item" onclick="toggleIndependent('${col}')" style="opacity: 0.5;">
+                                <input type="checkbox" id="ind_${col}" value="${col}">
+                                <label for="ind_${col}">${displayName(col)}</label>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : '');
 
             variableCard.classList.remove('hidden');
             variableCard.classList.add('fade-in');
