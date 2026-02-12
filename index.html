@@ -2115,7 +2115,7 @@
                     <div class="warning-box">
                         <div class="icon">⚠️</div>
                         <p><strong>Multicollinearity Detected:</strong> The following variables have high VIF values (>5): 
-                        ${highVif.map(v => `${v.variable} (VIF: ${v.vif.toFixed(1)})`).join(', ')}. 
+                        ${highVif.map(v => `${displayName(v.variable)} (VIF: ${v.vif.toFixed(1)})`).join(', ')}. 
                         This means these variables are highly correlated with other predictors, which can make individual coefficient estimates less reliable. 
                         Consider removing one of the correlated variables or using caution when interpreting these coefficients individually.</p>
                     </div>
@@ -2173,7 +2173,7 @@
 
                 summaryHtml += `
                     <tr>
-                        <td><strong>${col}</strong></td>
+                        <td><strong>${displayName(col)}</strong></td>
                         <td>${coefStr}</td>
                         <td><span class="ci-range">${ciLower} to ${ciUpper}</span></td>
                         <td class="${sig ? 'sig-yes' : 'sig-no'}">${sig ? '✓ Yes (p=' + pValues[i + 1].toFixed(3) + ')' : 'No (p=' + pValues[i + 1].toFixed(3) + ')'}</td>
@@ -2210,14 +2210,14 @@
                             <thead>
                                 <tr>
                                     <th></th>
-                                    ${correlationData.vars.map(v => `<th>${v.substring(0, 10)}</th>`).join('')}
+                                    ${correlationData.vars.map(v => `<th>${displayName(v).substring(0, 12)}</th>`).join('')}
                                 </tr>
                             </thead>
                             <tbody>
             `;
 
             correlationData.vars.forEach((var1, i) => {
-                corrHtml += `<tr><th>${var1.substring(0, 10)}</th>`;
+                corrHtml += `<tr><th>${displayName(var1).substring(0, 12)}</th>`;
                 correlationData.vars.forEach((var2, j) => {
                     const corr = correlationData.matrix[i][j];
                     const absCorr = Math.abs(corr);
@@ -2337,10 +2337,10 @@
 
             // Equation
             const equation = document.getElementById('equation');
-            let eqStr = `${selectedDependent} = ${formatNumber(beta[0])}`;
+            let eqStr = `${displayName(selectedDependent)} = ${formatNumber(beta[0])}`;
             selectedIndependent.forEach((col, i) => {
                 const sign = beta[i + 1] >= 0 ? ' + ' : ' - ';
-                eqStr += `${sign}${formatNumber(Math.abs(beta[i + 1]))} × ${col}`;
+                eqStr += `${sign}${formatNumber(Math.abs(beta[i + 1]))} × ${displayName(col)}`;
             });
             equation.textContent = eqStr;
 
@@ -2369,7 +2369,7 @@
                 
                 coefBody.innerHTML += `
                     <tr>
-                        <td><strong>${col}</strong></td>
+                        <td><strong>${displayName(col)}</strong></td>
                         <td>${formatNumber(coef)}</td>
                         <td style="font-size: 12px; color: #a0a0a0;">${formatCurrency(ci.lower)} to ${formatCurrency(ci.upper)}</td>
                         <td>${formatNumber(stdErrors[i + 1])}</td>
@@ -2430,7 +2430,7 @@
 
             // Methodology Statement
             document.getElementById('methodologyText').textContent = 
-                `A multiple regression analysis was performed to derive market-based adjustments for ${analysisSetup.propertyType ? analysisSetup.propertyType.toLowerCase() : 'residential'} properties in the ${analysisSetup.marketArea || 'subject'} market area. The analysis utilized ${n} comparable sales from ${analysisSetup.dataSource || 'verified sources'}${analysisSetup.dateRange ? `, covering the period ${analysisSetup.dateRange}` : ''}. The dependent variable was ${selectedDependent}, with ${selectedIndependent.join(', ')} serving as independent variables. This statistical approach isolates the contributory value of each property characteristic while controlling for the effects of other variables, providing market-derived support for the adjustments applied in this appraisal.`;
+                `A multiple regression analysis was performed to derive market-based adjustments for ${analysisSetup.propertyType ? analysisSetup.propertyType.toLowerCase() : 'residential'} properties in the ${analysisSetup.marketArea || 'subject'} market area. The analysis utilized ${n} comparable sales from ${analysisSetup.dataSource || 'verified sources'}${analysisSetup.dateRange ? `, covering the period ${analysisSetup.dateRange}` : ''}. The dependent variable was ${displayName(selectedDependent)}, with ${selectedIndependent.map(displayName).join(', ')} serving as independent variables. This statistical approach isolates the contributory value of each property characteristic while controlling for the effects of other variables, providing market-derived support for the adjustments applied in this appraisal.`;
 
             // Results Summary
             const rSquaredPct = (rSquared * 100).toFixed(1);
@@ -2438,7 +2438,7 @@
             let modelQuality = rSquared > 0.8 ? 'excellent' : rSquared > 0.6 ? 'good' : rSquared > 0.4 ? 'moderate' : 'limited';
             
             document.getElementById('resultsText').textContent = 
-                `The regression model demonstrates ${modelQuality} explanatory power with an R-squared of ${rSquaredPct}% (Adjusted R-squared: ${adjRSquaredPct}%), indicating that approximately ${rSquaredPct}% of the variation in ${selectedDependent.toLowerCase()} can be explained by the selected property characteristics. The model is based on ${n} observations and ${p} predictor variable${p > 1 ? 's' : ''}. These results provide statistically supported evidence for the adjustments applied in the sales comparison approach.`;
+                `The regression model demonstrates ${modelQuality} explanatory power with an R-squared of ${rSquaredPct}% (Adjusted R-squared: ${adjRSquaredPct}%), indicating that approximately ${rSquaredPct}% of the variation in ${displayName(selectedDependent).toLowerCase()} can be explained by the selected property characteristics. The model is based on ${n} observations and ${p} predictor variable${p > 1 ? 's' : ''}. These results provide statistically supported evidence for the adjustments applied in the sales comparison approach.`;
 
             // Adjustments Support with confidence intervals
             const df = n - p - 1;
@@ -2455,9 +2455,9 @@
                 const direction = coef >= 0 ? 'positive' : 'negative';
                 
                 if (pVal < 0.05) {
-                    sigVars.push(`${col} (${direction} ${coefStr}, 95% CI: ${ciStr})`);
+                    sigVars.push(`${displayName(col)} (${direction} ${coefStr}, 95% CI: ${ciStr})`);
                 } else {
-                    nonsigVars.push(col);
+                    nonsigVars.push(displayName(col));
                 }
             });
 
@@ -2527,8 +2527,8 @@ Numeric Variables:      ${numericColumns.join(', ')}
 SECTION 3: MODEL SPECIFICATION
 ================================================================================
 
-Dependent Variable:     ${selectedDependent}
-Independent Variables:  ${selectedIndependent.join(', ')}
+Dependent Variable:     ${displayName(selectedDependent)}
+Independent Variables:  ${selectedIndependent.map(displayName).join(', ')}
 
 Model Type:             Ordinary Least Squares (OLS) Multiple Regression
 Estimation Method:      Matrix algebra solution: β = (X'X)⁻¹X'y
@@ -2549,9 +2549,9 @@ Degrees of Freedom:     ${n - p - 1}
 
 REGRESSION EQUATION
 -------------------
-${selectedDependent} = ${formatNumber(beta[0])}${selectedIndependent.map((col, i) => {
+${displayName(selectedDependent)} = ${formatNumber(beta[0])}${selectedIndependent.map((col, i) => {
     const sign = beta[i + 1] >= 0 ? ' + ' : ' - ';
-    return `${sign}${formatNumber(Math.abs(beta[i + 1]))} × ${col}`;
+    return `${sign}${formatNumber(Math.abs(beta[i + 1]))} × ${displayName(col)}`;
 }).join('')}
 
 COEFFICIENT DETAILS WITH 95% CONFIDENCE INTERVALS
@@ -2574,7 +2574,7 @@ ${selectedIndependent.map((col, i) => {
 VARIANCE INFLATION FACTORS (VIF) - MULTICOLLINEARITY CHECK
 ----------------------------------------------------------
 ${regressionResults.vif ? regressionResults.vif.map(v => 
-    `${v.variable.padEnd(20)} VIF: ${v.vif.toFixed(2)}${v.vif > 5 ? '  ⚠️ HIGH - Consider removing' : v.vif > 2.5 ? '  ⚡ MODERATE' : '  ✓ OK'}`
+    `${displayName(v.variable).padEnd(20)} VIF: ${v.vif.toFixed(2)}${v.vif > 5 ? '  ⚠️ HIGH - Consider removing' : v.vif > 2.5 ? '  ⚡ MODERATE' : '  ✓ OK'}`
 ).join('\n') : 'Not calculated'}
 
 Note: VIF > 5 indicates high multicollinearity; VIF > 10 is severe.
@@ -2596,7 +2596,7 @@ Review these sales for data accuracy or atypical conditions of sale.
 
 INTERPRETATION OF COEFFICIENTS
 ------------------------------
-${selectedIndependent.map((col, i) => `• ${col}: ${generateInterpretation(col, beta[i + 1], selectedDependent)}`).join('\n')}
+${selectedIndependent.map((col, i) => `• ${displayName(col)}: ${generateInterpretation(col, beta[i + 1], selectedDependent)}`).join('\n')}
 
 ================================================================================
 SECTION 5: RESIDUAL ANALYSIS
@@ -2616,7 +2616,7 @@ To replicate this analysis:
 
 1. DATA PREPARATION
    - Obtain comparable sales data from: ${analysisSetup.dataSource}
-   - Include the following variables: ${[selectedDependent, ...selectedIndependent].join(', ')}
+   - Include the following variables: ${[selectedDependent, ...selectedIndependent].map(displayName).join(', ')}
    - Verify all data for accuracy before analysis
 
 2. SOFTWARE REQUIREMENTS
@@ -2625,8 +2625,8 @@ To replicate this analysis:
 
 3. ANALYSIS STEPS
    a. Import the CSV data file
-   b. Set ${selectedDependent} as the dependent variable
-   c. Set ${selectedIndependent.join(', ')} as independent variables
+   b. Set ${displayName(selectedDependent)} as the dependent variable
+   c. Set ${selectedIndependent.map(displayName).join(', ')} as independent variables
    d. Run ordinary least squares (OLS) regression
    e. Compare results to this documentation
 
@@ -2702,7 +2702,7 @@ Date: ${formatDate(analysisSetup.effectiveDate)}
             selectedIndependent.slice(0, 3).forEach((col, idx) => {
                 chartsGrid.innerHTML += `
                     <div class="chart-container">
-                        <h3>🔵 ${selectedDependent} vs ${col}</h3>
+                        <h3>🔵 ${displayName(selectedDependent)} vs ${displayName(col)}</h3>
                         <div class="chart-wrapper"><canvas id="scatter_${idx}"></canvas></div>
                     </div>
                 `;
@@ -2879,12 +2879,12 @@ Date: ${formatDate(analysisSetup.effectiveDate)}
                         plugins: { legend: { display: false } },
                         scales: {
                             x: {
-                                title: { display: true, text: col, color: '#b0b0b0' },
+                                title: { display: true, text: displayName(col), color: '#b0b0b0' },
                                 ticks: { color: '#808080' },
                                 grid: { color: 'rgba(255,255,255,0.1)' }
                             },
                             y: {
-                                title: { display: true, text: selectedDependent, color: '#b0b0b0' },
+                                title: { display: true, text: displayName(selectedDependent), color: '#b0b0b0' },
                                 ticks: { color: '#808080' },
                                 grid: { color: 'rgba(255,255,255,0.1)' }
                             }
@@ -3094,9 +3094,9 @@ RESULTS
 ${results}
 
 Regression Equation:
-${selectedDependent} = ${formatNumber(beta[0])}${selectedIndependent.map((col, i) => {
+${displayName(selectedDependent)} = ${formatNumber(beta[0])}${selectedIndependent.map((col, i) => {
     const sign = beta[i + 1] >= 0 ? ' + ' : ' - ';
-    return `${sign}${formatNumber(Math.abs(beta[i + 1]))} × ${col}`;
+    return `${sign}${formatNumber(Math.abs(beta[i + 1]))} × ${displayName(col)}`;
 }).join('')}
 
 --------------------------------------------------------------------------------
