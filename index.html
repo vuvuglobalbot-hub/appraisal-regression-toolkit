@@ -1,0 +1,3110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appraisal Regression Toolkit | AI for Appraisers</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+
+        .header {
+            background: linear-gradient(90deg, #e94560 0%, #ff6b6b 100%);
+            padding: 20px 40px;
+            box-shadow: 0 4px 20px rgba(233, 69, 96, 0.3);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header h1 span {
+            font-size: 32px;
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.9);
+            margin-top: 5px;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 25px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(233, 69, 96, 0.3);
+            box-shadow: 0 8px 32px rgba(233, 69, 96, 0.1);
+        }
+
+        .card h2 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #ff6b6b;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h2 .step {
+            background: linear-gradient(90deg, #e94560, #ff6b6b);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        /* Form Styles */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #b0b0b0;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .form-group label .required {
+            color: #e94560;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #e0e0e0;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #e94560;
+            box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.2);
+        }
+
+        .form-group select option {
+            background: #1a1a2e;
+        }
+
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .form-hint {
+            font-size: 12px;
+            color: #808080;
+            margin-top: 5px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .checkbox-group input {
+            width: 18px;
+            height: 18px;
+            accent-color: #e94560;
+            margin-top: 2px;
+        }
+
+        .checkbox-group span {
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        /* Upload Area */
+        .upload-area {
+            border: 2px dashed rgba(233, 69, 96, 0.5);
+            border-radius: 12px;
+            padding: 50px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(233, 69, 96, 0.05);
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #e94560;
+            background: rgba(233, 69, 96, 0.1);
+            transform: scale(1.01);
+        }
+
+        .upload-area .icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .upload-area p {
+            font-size: 16px;
+            color: #b0b0b0;
+        }
+
+        .upload-area .hint {
+            font-size: 13px;
+            color: #808080;
+            margin-top: 10px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        /* Data Preview */
+        .data-preview {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        .data-preview table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .data-preview th, .data-preview td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .data-preview th {
+            background: rgba(233, 69, 96, 0.2);
+            color: #ff6b6b;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        .data-preview tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Variable Selection */
+        .variable-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .variable-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .variable-box {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .variable-box h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #b0b0b0;
+        }
+
+        .variable-box h3 span {
+            color: #ff6b6b;
+        }
+
+        .variable-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .variable-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .variable-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .variable-item.selected {
+            background: rgba(233, 69, 96, 0.2);
+            border: 1px solid rgba(233, 69, 96, 0.5);
+        }
+
+        .variable-item input[type="radio"],
+        .variable-item input[type="checkbox"] {
+            accent-color: #e94560;
+            width: 18px;
+            height: 18px;
+        }
+
+        .variable-item label {
+            cursor: pointer;
+            flex: 1;
+        }
+
+        /* Buttons */
+        .btn {
+            background: linear-gradient(90deg, #e94560, #ff6b6b);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(233, 69, 96, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: none;
+        }
+
+        .btn-success {
+            background: linear-gradient(90deg, #10b981, #34d399);
+        }
+
+        .btn-success:hover {
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Adjustment Summary Table */
+        .adjustment-summary {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(6, 78, 59, 0.15) 100%);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        .adjustment-summary h3 {
+            color: #4ade80;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .adjustment-summary table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .adjustment-summary th {
+            background: rgba(0, 0, 0, 0.3);
+            color: #4ade80;
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .adjustment-summary td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 14px;
+        }
+
+        .adjustment-summary .sig-yes {
+            color: #4ade80;
+            font-weight: 600;
+        }
+
+        .adjustment-summary .sig-no {
+            color: #fbbf24;
+        }
+
+        .adjustment-summary .ci-range {
+            font-size: 12px;
+            color: #a0a0a0;
+        }
+
+        /* Warning Boxes */
+        .warning-box {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.4);
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .warning-box .icon {
+            font-size: 20px;
+        }
+
+        .warning-box p {
+            font-size: 14px;
+            color: #fcd34d;
+            line-height: 1.5;
+        }
+
+        .warning-box.error {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.4);
+        }
+
+        .warning-box.error p {
+            color: #fca5a5;
+        }
+
+        /* Correlation Matrix */
+        .correlation-section {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .correlation-section h4 {
+            color: #a5b4fc;
+            margin-bottom: 15px;
+            font-size: 15px;
+        }
+
+        .correlation-matrix {
+            overflow-x: auto;
+        }
+
+        .correlation-matrix table {
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .correlation-matrix th, .correlation-matrix td {
+            padding: 8px 10px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            min-width: 70px;
+        }
+
+        .correlation-matrix th {
+            background: rgba(99, 102, 241, 0.2);
+            color: #a5b4fc;
+            font-weight: 600;
+        }
+
+        .correlation-matrix .high-corr {
+            background: rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            font-weight: 600;
+        }
+
+        .correlation-matrix .med-corr {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fcd34d;
+        }
+
+        /* Outlier Table */
+        .outlier-section {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .outlier-section h4 {
+            color: #fca5a5;
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+
+        .outlier-section p {
+            font-size: 13px;
+            color: #d4d4d4;
+            margin-bottom: 15px;
+        }
+
+        .outlier-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .outlier-table th {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .outlier-table td {
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Model Limitations */
+        .limitations-box {
+            background: rgba(100, 116, 139, 0.2);
+            border: 1px solid rgba(100, 116, 139, 0.4);
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-top: 25px;
+            font-size: 13px;
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+
+        .limitations-box strong {
+            color: #cbd5e1;
+        }
+
+        /* Results */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #ff6b6b;
+            margin-bottom: 5px;
+        }
+
+        .stat-card .label {
+            font-size: 13px;
+            color: #808080;
+        }
+
+        .stat-card.good .value { color: #4ade80; }
+        .stat-card.warning .value { color: #fbbf24; }
+        .stat-card.bad .value { color: #f87171; }
+
+        /* Equation Display */
+        .equation-box {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            font-family: 'Courier New', monospace;
+            font-size: 15px;
+            overflow-x: auto;
+            border-left: 4px solid #e94560;
+        }
+
+        .equation-box .title {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 14px;
+            color: #808080;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        /* Coefficients Table */
+        .coef-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .coef-table th, .coef-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .coef-table th {
+            background: rgba(233, 69, 96, 0.15);
+            color: #ff6b6b;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .coef-table td {
+            font-size: 14px;
+        }
+
+        .coef-table .interpretation {
+            font-size: 13px;
+            color: #4ade80;
+            font-style: italic;
+        }
+
+        /* Charts */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .chart-container {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .chart-container h3 {
+            font-size: 15px;
+            margin-bottom: 15px;
+            color: #b0b0b0;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 280px;
+        }
+
+        /* Commentary Section */
+        .commentary-section {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+
+        .commentary-section h3 {
+            color: #4ade80;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .commentary-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .commentary-box h4 {
+            color: #b0b0b0;
+            font-size: 13px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .commentary-box p {
+            font-size: 14px;
+            line-height: 1.7;
+            color: #e0e0e0;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            color: #b0b0b0;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .copy-btn.copied {
+            background: rgba(16, 185, 129, 0.3);
+            color: #4ade80;
+        }
+
+        /* Work File Documentation */
+        .workfile-section {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+
+        .workfile-section h3 {
+            color: #818cf8;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .workfile-preview {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            color: #b0b0b0;
+        }
+
+        /* Export Section */
+        .export-section {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 25px;
+        }
+
+        /* Hidden sections */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .info-box .icon {
+            font-size: 20px;
+        }
+
+        .info-box p {
+            font-size: 14px;
+            color: #93c5fd;
+            line-height: 1.5;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(233, 69, 96, 0.5);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(233, 69, 96, 0.7);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #606060;
+            font-size: 13px;
+        }
+
+        .footer a {
+            color: #ff6b6b;
+            text-decoration: none;
+        }
+
+        /* Print Stylesheet */
+        @media print {
+            * {
+                color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+
+            body {
+                background: white !important;
+                color: #1a1a1a !important;
+                font-size: 11pt;
+            }
+
+            .header {
+                background: white !important;
+                box-shadow: none !important;
+                border-bottom: 3px solid #333;
+                padding: 15px 20px;
+            }
+
+            .header h1 {
+                color: #1a1a1a !important;
+                font-size: 22pt;
+            }
+
+            .header p {
+                color: #555 !important;
+            }
+
+            .container {
+                padding: 0;
+                max-width: 100%;
+            }
+
+            .card {
+                background: white !important;
+                border: 1px solid #ccc !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                backdrop-filter: none !important;
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+
+            .card h2 {
+                color: #1a1a1a !important;
+            }
+
+            .card h2 .step {
+                background: #333 !important;
+            }
+
+            /* Hide interactive elements */
+            #setupCard,
+            #uploadCard,
+            #variableCard,
+            .upload-area,
+            .btn,
+            .copy-btn,
+            .export-section,
+            #sampleDataBtn,
+            .info-box {
+                display: none !important;
+            }
+
+            /* Show results card */
+            #resultsCard {
+                display: block !important;
+                border: none !important;
+            }
+
+            /* Tables */
+            .coef-table th, .coef-table td,
+            .adjustment-summary th, .adjustment-summary td,
+            .correlation-matrix th, .correlation-matrix td,
+            .outlier-table th, .outlier-table td,
+            .data-preview th, .data-preview td {
+                border: 1px solid #999 !important;
+                color: #1a1a1a !important;
+                padding: 6px 8px;
+            }
+
+            .coef-table th,
+            .adjustment-summary th,
+            .correlation-matrix th,
+            .outlier-table th {
+                background: #e0e0e0 !important;
+                color: #1a1a1a !important;
+            }
+
+            .adjustment-summary {
+                background: white !important;
+                border: 2px solid #333 !important;
+            }
+
+            .adjustment-summary h3 {
+                color: #1a1a1a !important;
+            }
+
+            .correlation-section {
+                background: white !important;
+                border: 1px solid #999 !important;
+            }
+
+            .correlation-section h4 {
+                color: #1a1a1a !important;
+            }
+
+            .outlier-section {
+                background: white !important;
+                border: 1px solid #999 !important;
+            }
+
+            .outlier-section h4, .outlier-section p {
+                color: #1a1a1a !important;
+            }
+
+            /* Stats grid */
+            .stat-card {
+                background: #f5f5f5 !important;
+                border: 1px solid #ccc;
+            }
+
+            .stat-card .value {
+                color: #1a1a1a !important;
+            }
+
+            .stat-card .label {
+                color: #555 !important;
+            }
+
+            /* Equation box */
+            .equation-box {
+                background: #f5f5f5 !important;
+                border-left: 4px solid #333 !important;
+                color: #1a1a1a !important;
+            }
+
+            .equation-box .title {
+                color: #333 !important;
+            }
+
+            /* Commentary */
+            .commentary-section {
+                background: white !important;
+                border: 1px solid #999 !important;
+            }
+
+            .commentary-section h3 {
+                color: #1a1a1a !important;
+            }
+
+            .commentary-box {
+                background: #f9f9f9 !important;
+                page-break-inside: avoid;
+            }
+
+            .commentary-box h4 {
+                color: #333 !important;
+            }
+
+            .commentary-box p {
+                color: #1a1a1a !important;
+            }
+
+            /* Work file */
+            .workfile-section {
+                background: white !important;
+                border: 1px solid #999 !important;
+                page-break-before: always;
+            }
+
+            .workfile-section h3 {
+                color: #1a1a1a !important;
+            }
+
+            .workfile-preview {
+                background: #f5f5f5 !important;
+                color: #1a1a1a !important;
+                max-height: none !important;
+                overflow: visible !important;
+            }
+
+            /* Limitations */
+            .limitations-box {
+                background: #f5f5f5 !important;
+                border: 1px solid #999 !important;
+                color: #1a1a1a !important;
+            }
+
+            .limitations-box strong {
+                color: #1a1a1a !important;
+            }
+
+            /* Charts */
+            .chart-container {
+                background: white !important;
+                page-break-inside: avoid;
+            }
+
+            .chart-container h3 {
+                color: #1a1a1a !important;
+            }
+
+            .chart-wrapper {
+                height: 220px !important;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr 1fr !important;
+            }
+
+            /* Warning boxes */
+            .warning-box {
+                background: #fff8e1 !important;
+                border: 1px solid #f9a825 !important;
+                color: #1a1a1a !important;
+            }
+
+            .warning-box p {
+                color: #1a1a1a !important;
+            }
+
+            .warning-box.error {
+                background: #fce4ec !important;
+                border-color: #c62828 !important;
+            }
+
+            /* Page breaks */
+            .commentary-section {
+                page-break-before: always;
+            }
+
+            /* Analysis info */
+            .analysis-info {
+                background: #f5f5f5 !important;
+            }
+
+            .analysis-info-item .label {
+                color: #555 !important;
+            }
+
+            .analysis-info-item .value {
+                color: #1a1a1a !important;
+            }
+
+            /* Footer */
+            .footer {
+                color: #555 !important;
+            }
+
+            .footer a {
+                color: #333 !important;
+            }
+
+            /* Interpretation */
+            .coef-table .interpretation {
+                color: #2e7d32 !important;
+            }
+
+            /* Sig colors */
+            .adjustment-summary .sig-yes {
+                color: #2e7d32 !important;
+            }
+
+            .adjustment-summary .sig-no {
+                color: #f57f17 !important;
+            }
+
+            /* Sample size warnings for print */
+            .sample-size-warning {
+                page-break-inside: avoid;
+            }
+        }
+
+        /* Analysis Info Summary */
+        .analysis-info {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            font-size: 13px;
+        }
+
+        .analysis-info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .analysis-info-item .label {
+            color: #808080;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .analysis-info-item .value {
+            color: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><span>📊</span> Appraisal Regression Toolkit</h1>
+        <p>Powered by AI for Appraisers | Professional Market Analysis Made Simple</p>
+    </div>
+
+    <div class="container">
+        <!-- Step 1: Analysis Setup -->
+        <div class="card" id="setupCard">
+            <h2><span class="step">1</span> Analysis Setup & Documentation</h2>
+            
+            <div class="info-box">
+                <div class="icon">💡</div>
+                <p>Complete this information before running your analysis. This creates a documented audit trail for your work file and ensures your methodology is defensible if challenged.</p>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Appraiser Name <span class="required">*</span></label>
+                    <input type="text" id="appraiserName" placeholder="Enter your name">
+                </div>
+                <div class="form-group">
+                    <label>License/Certification Number</label>
+                    <input type="text" id="licenseNumber" placeholder="State certification #">
+                </div>
+                <div class="form-group">
+                    <label>Effective Date of Analysis <span class="required">*</span></label>
+                    <input type="date" id="effectiveDate">
+                </div>
+                <div class="form-group">
+                    <label>Property Type <span class="required">*</span></label>
+                    <select id="propertyType">
+                        <option value="">Select property type...</option>
+                        <option value="Single Family Residential">Single Family Residential</option>
+                        <option value="Condominium">Condominium</option>
+                        <option value="Townhouse">Townhouse</option>
+                        <option value="Multi-Family (2-4 units)">Multi-Family (2-4 units)</option>
+                        <option value="Vacant Land">Vacant Land</option>
+                        <option value="Commercial">Commercial</option>
+                        <option value="Mixed Use">Mixed Use</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Market Area / Neighborhood <span class="required">*</span></label>
+                    <input type="text" id="marketArea" placeholder="e.g., Downtown Riverside, North County San Diego">
+                </div>
+                <div class="form-group">
+                    <label>Data Source <span class="required">*</span></label>
+                    <select id="dataSource">
+                        <option value="">Select data source...</option>
+                        <option value="MLS">MLS (Multiple Listing Service)</option>
+                        <option value="Public Records">Public Records</option>
+                        <option value="MLS and Public Records">MLS and Public Records (Verified)</option>
+                        <option value="Appraiser Database">Appraiser Database</option>
+                        <option value="CoStar">CoStar</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Analysis Purpose <span class="required">*</span></label>
+                    <select id="analysisPurpose">
+                        <option value="">Select purpose...</option>
+                        <option value="Market-Based Adjustments">Derive Market-Based Adjustments</option>
+                        <option value="Market Trend Analysis">Market Trend Analysis</option>
+                        <option value="Contributory Value">Determine Contributory Value</option>
+                        <option value="Highest and Best Use Support">Highest and Best Use Support</option>
+                        <option value="Litigation Support">Litigation Support</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Date Range of Sales Data</label>
+                    <input type="text" id="dateRange" placeholder="e.g., January 2024 - December 2024">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Additional Notes / Special Considerations</label>
+                <textarea id="additionalNotes" placeholder="Document any special considerations, market conditions, or data adjustments made prior to analysis..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="checkbox-group">
+                    <input type="checkbox" id="dataVerified">
+                    <span>I certify that I have verified the accuracy of the comparable sales data used in this analysis, including sale prices, property characteristics, and transaction details.</span>
+                </label>
+            </div>
+
+            <button class="btn" id="proceedToUpload" disabled>
+                <span>📁</span> Proceed to Data Upload
+            </button>
+            <span id="setupHint" style="margin-left: 15px; color: #808080; font-size: 14px;">Complete required fields to continue</span>
+        </div>
+
+        <!-- Step 2: Upload -->
+        <div class="card hidden" id="uploadCard">
+            <h2><span class="step">2</span> Upload Your Comparable Sales Data</h2>
+            
+            <div class="analysis-info" id="analysisInfoSummary"></div>
+
+            <div class="upload-area" id="uploadArea">
+                <div class="icon">📁</div>
+                <p>Drag & drop your CSV file here, or click to browse</p>
+                <p class="hint">Supported: CSV files with property data (Address, Sale Price, Sq Ft, Beds, Baths, etc.)</p>
+            </div>
+            <input type="file" id="fileInput" accept=".csv">
+
+            <div style="text-align: center; margin-top: 15px;">
+                <span style="color: #808080; font-size: 13px;">— or —</span><br>
+                <button class="btn btn-secondary" id="sampleDataBtn" onclick="loadSampleData()" style="margin-top: 10px;">
+                    <span>📊</span> Load Sample Data (25 SFR Comparables)
+                </button>
+            </div>
+            
+            <div class="data-preview hidden" id="dataPreview">
+                <h3 style="margin-bottom: 15px; color: #4ade80;">✓ Data Loaded Successfully</h3>
+                <p style="margin-bottom: 15px; color: #b0b0b0;"><span id="rowCount">0</span> comparable sales loaded</p>
+                <div style="max-height: 300px; overflow: auto; border-radius: 8px;">
+                    <table id="previewTable"></table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Variable Selection -->
+        <div class="card hidden" id="variableCard">
+            <h2><span class="step">3</span> Select Your Variables</h2>
+            
+            <div class="info-box">
+                <div class="icon">📐</div>
+                <p><strong>Dependent Variable:</strong> What you're trying to predict (usually Sale Price).<br>
+                <strong>Independent Variables:</strong> Property characteristics that may influence the dependent variable. Select variables that are relevant to your market and property type.</p>
+            </div>
+
+            <div class="variable-section">
+                <div class="variable-box">
+                    <h3>📈 <span>Dependent Variable</span> (What you're predicting)</h3>
+                    <p style="font-size: 13px; color: #808080; margin-bottom: 15px;">Usually Sale Price or Price per Sq Ft</p>
+                    <div class="variable-list" id="dependentList"></div>
+                </div>
+                <div class="variable-box">
+                    <h3>📊 <span>Independent Variables</span> (Predictors)</h3>
+                    <p style="font-size: 13px; color: #808080; margin-bottom: 15px;">Select characteristics that might affect value</p>
+                    <div class="variable-list" id="independentList"></div>
+                </div>
+            </div>
+            <div style="margin-top: 25px; display: flex; gap: 15px; align-items: center;">
+                <button class="btn" id="runAnalysis" disabled>
+                    <span>🚀</span> Run Regression Analysis
+                </button>
+                <span id="selectionHint" style="color: #808080; font-size: 14px;">Select a dependent variable and at least one independent variable</span>
+            </div>
+        </div>
+
+        <!-- Step 4: Results -->
+        <div class="card hidden" id="resultsCard">
+            <h2><span class="step">4</span> Regression Results</h2>
+            
+            <div class="analysis-info" id="resultsAnalysisInfo"></div>
+
+            <div class="results-grid" id="statsGrid">
+                <!-- Populated dynamically -->
+            </div>
+
+            <div class="equation-box" id="equationBox">
+                <div class="title">REGRESSION EQUATION</div>
+                <div id="equation"></div>
+            </div>
+
+            <h3 style="margin: 25px 0 15px; color: #ff6b6b;">📋 Coefficient Details & Interpretations</h3>
+            <div style="overflow-x: auto;">
+                <table class="coef-table" id="coefTable">
+                    <thead>
+                        <tr>
+                            <th>Variable</th>
+                            <th>Coefficient</th>
+                            <th>95% CI</th>
+                            <th>Std Error</th>
+                            <th>T-Stat</th>
+                            <th>P-Value</th>
+                            <th>Interpretation</th>
+                        </tr>
+                    </thead>
+                    <tbody id="coefBody"></tbody>
+                </table>
+            </div>
+
+            <div class="charts-grid" id="chartsGrid">
+                <!-- Charts populated dynamically -->
+            </div>
+
+            <!-- Report-Ready Commentary -->
+            <div class="commentary-section">
+                <h3>📝 Report-Ready Commentary</h3>
+                <p style="color: #b0b0b0; margin-bottom: 20px; font-size: 14px;">Copy these professionally-written paragraphs directly into your appraisal report. Click any section to copy.</p>
+                
+                <div class="commentary-box" id="methodologyCommentary">
+                    <h4>Methodology Statement</h4>
+                    <button class="copy-btn" onclick="copyCommentary('methodologyCommentary')">📋 Copy</button>
+                    <p id="methodologyText"></p>
+                </div>
+
+                <div class="commentary-box" id="resultsCommentary">
+                    <h4>Results Summary</h4>
+                    <button class="copy-btn" onclick="copyCommentary('resultsCommentary')">📋 Copy</button>
+                    <p id="resultsText"></p>
+                </div>
+
+                <div class="commentary-box" id="adjustmentsCommentary">
+                    <h4>Adjustment Support</h4>
+                    <button class="copy-btn" onclick="copyCommentary('adjustmentsCommentary')">📋 Copy</button>
+                    <p id="adjustmentsText"></p>
+                </div>
+
+                <div class="commentary-box" id="conclusionCommentary">
+                    <h4>Conclusion Statement</h4>
+                    <button class="copy-btn" onclick="copyCommentary('conclusionCommentary')">📋 Copy</button>
+                    <p id="conclusionText"></p>
+                </div>
+            </div>
+
+            <!-- Model Limitations -->
+            <div class="limitations-box" id="limitationsBox">
+                <strong>📋 Model Limitations & USPAP Compliance Note:</strong><br><br>
+                This regression analysis assumes linear relationships between property characteristics and value. Non-linear effects (such as diminishing returns on square footage for very large homes, or accelerated depreciation for older properties) are not captured in this model. 
+                
+                The confidence intervals provided represent statistical uncertainty in the market adjustment estimates, not appraisal uncertainty.
+                
+                Results should be reconciled with paired sales analysis, appraiser judgment, and local market knowledge consistent with USPAP Standards Rule 1-1(b) requiring the appraiser to not commit a substantial error of omission or commission that significantly affects an appraisal.
+                
+                This analysis provides market-derived support for adjustments but does not replace the appraiser's responsibility to apply professional judgment in developing credible assignment results.
+            </div>
+
+            <!-- Work File Documentation -->
+            <div class="workfile-section">
+                <h3>📂 Work File Documentation</h3>
+                <p style="color: #b0b0b0; margin-bottom: 20px; font-size: 14px;">This complete documentation package provides an audit trail for your work file. It includes all inputs, methodology, and results needed to replicate this analysis.</p>
+                
+                <div class="workfile-preview" id="workfilePreview"></div>
+            </div>
+
+            <div class="export-section">
+                <button class="btn btn-success" onclick="exportWorkFile()">
+                    <span>📂</span> Export Work File Documentation
+                </button>
+                <button class="btn" onclick="exportReport()">
+                    <span>📄</span> Export Full Report
+                </button>
+                <button class="btn btn-secondary" onclick="exportCSV()">
+                    <span>📊</span> Export Data with Predictions (CSV)
+                </button>
+                <button class="btn btn-secondary" onclick="resetAnalysis()">
+                    <span>🔄</span> Start New Analysis
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        Built with ❤️ for <a href="#">AI for Appraisers</a> by VuVu Global | v1.0
+    </div>
+
+    <script>
+        const VERSION = '1.0.0';
+
+        // Global state
+        let rawData = [];
+        let headers = [];
+        let numericColumns = [];
+        let selectedDependent = null;
+        let selectedIndependent = [];
+        let regressionResults = null;
+        let charts = [];
+        let analysisSetup = {};
+
+        // DOM Elements
+        const setupCard = document.getElementById('setupCard');
+        const uploadCard = document.getElementById('uploadCard');
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const dataPreview = document.getElementById('dataPreview');
+        const previewTable = document.getElementById('previewTable');
+        const rowCount = document.getElementById('rowCount');
+        const variableCard = document.getElementById('variableCard');
+        const dependentList = document.getElementById('dependentList');
+        const independentList = document.getElementById('independentList');
+        const runAnalysisBtn = document.getElementById('runAnalysis');
+        const selectionHint = document.getElementById('selectionHint');
+        const resultsCard = document.getElementById('resultsCard');
+        const proceedBtn = document.getElementById('proceedToUpload');
+
+        // Set default date to today
+        document.getElementById('effectiveDate').valueAsDate = new Date();
+
+        // Setup form validation
+        const requiredFields = ['appraiserName', 'effectiveDate', 'propertyType', 'marketArea', 'dataSource', 'analysisPurpose'];
+        
+        requiredFields.forEach(field => {
+            document.getElementById(field).addEventListener('input', validateSetup);
+            document.getElementById(field).addEventListener('change', validateSetup);
+        });
+        document.getElementById('dataVerified').addEventListener('change', validateSetup);
+
+        function validateSetup() {
+            const allFilled = requiredFields.every(field => document.getElementById(field).value.trim() !== '');
+            const verified = document.getElementById('dataVerified').checked;
+            
+            proceedBtn.disabled = !(allFilled && verified);
+            
+            if (allFilled && verified) {
+                document.getElementById('setupHint').textContent = '✓ Ready to proceed';
+                document.getElementById('setupHint').style.color = '#4ade80';
+            } else if (!verified && allFilled) {
+                document.getElementById('setupHint').textContent = 'Please verify data accuracy';
+                document.getElementById('setupHint').style.color = '#fbbf24';
+            } else {
+                document.getElementById('setupHint').textContent = 'Complete required fields to continue';
+                document.getElementById('setupHint').style.color = '#808080';
+            }
+        }
+
+        proceedBtn.addEventListener('click', () => {
+            // Save setup data
+            analysisSetup = {
+                appraiserName: document.getElementById('appraiserName').value,
+                licenseNumber: document.getElementById('licenseNumber').value,
+                effectiveDate: document.getElementById('effectiveDate').value,
+                propertyType: document.getElementById('propertyType').value,
+                marketArea: document.getElementById('marketArea').value,
+                dataSource: document.getElementById('dataSource').value,
+                analysisPurpose: document.getElementById('analysisPurpose').value,
+                dateRange: document.getElementById('dateRange').value,
+                additionalNotes: document.getElementById('additionalNotes').value,
+                analysisTimestamp: new Date().toISOString()
+            };
+
+            // Show analysis summary
+            document.getElementById('analysisInfoSummary').innerHTML = `
+                <div class="analysis-info-item">
+                    <span class="label">Appraiser</span>
+                    <span class="value">${analysisSetup.appraiserName}</span>
+                </div>
+                <div class="analysis-info-item">
+                    <span class="label">Effective Date</span>
+                    <span class="value">${formatDate(analysisSetup.effectiveDate)}</span>
+                </div>
+                <div class="analysis-info-item">
+                    <span class="label">Property Type</span>
+                    <span class="value">${analysisSetup.propertyType}</span>
+                </div>
+                <div class="analysis-info-item">
+                    <span class="label">Market Area</span>
+                    <span class="value">${analysisSetup.marketArea}</span>
+                </div>
+                <div class="analysis-info-item">
+                    <span class="label">Data Source</span>
+                    <span class="value">${analysisSetup.dataSource}</span>
+                </div>
+                <div class="analysis-info-item">
+                    <span class="label">Purpose</span>
+                    <span class="value">${analysisSetup.analysisPurpose}</span>
+                </div>
+            `;
+
+            uploadCard.classList.remove('hidden');
+            uploadCard.classList.add('fade-in');
+            uploadCard.scrollIntoView({ behavior: 'smooth' });
+        });
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        // File Upload Handlers
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) processFile(file);
+        });
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) processFile(file);
+        });
+
+        function processFile(file) {
+            if (!file.name.endsWith('.csv')) {
+                alert('Please upload a CSV file');
+                return;
+            }
+
+            analysisSetup.fileName = file.name;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                parseCSV(e.target.result);
+            };
+            reader.readAsText(file);
+        }
+
+        function loadSampleData() {
+            const csv = `Address,Sale_Price,GLA,Lot_Size_SF,Bedrooms,Bathrooms,Age,Garage_Spaces,Pool,Sale_Date
+"18432 Beach Blvd, Huntington Beach",1095000,2100,6200,4,3.0,12,2,1,03/15/2025
+"9821 Adams Ave, Huntington Beach",985000,2100,5800,4,2.5,25,2,0,06/22/2025
+"17205 Magnolia St, Fountain Valley",875000,1780,5500,3,2.0,15,2,0,01/10/2025
+"6742 Bolsa Ave, Westminster",745000,1650,4200,3,2.0,45,1,0,04/08/2025
+"2215 Pacific Coast Hwy, Huntington Beach",1285000,2600,7200,5,3.5,8,3,1,07/01/2025
+"19803 Bushard St, Huntington Beach",915000,1950,6000,4,2.5,30,2,0,09/18/2025
+"3310 Harbor Blvd, Costa Mesa",850000,1850,5100,3,2.0,22,2,0,11/05/2025
+"1420 Superior Ave, Costa Mesa",1125000,2200,5900,4,3.0,10,2,1,02/14/2025
+"8956 Heil Ave, Westminster",710000,1500,4000,3,1.5,52,1,0,05/30/2025
+"16401 Springdale St, Huntington Beach",1150000,2350,6500,4,3.0,6,2,1,08/12/2025
+"10234 Slater Ave, Fountain Valley",895000,1820,5600,3,2.5,20,2,0,12/03/2024
+"4518 Hamilton Ave, Huntington Beach",890000,2050,5400,4,2.0,35,2,0,03/27/2025
+"15678 Bushard St, Westminster",770000,1520,4500,3,2.0,42,2,0,10/15/2025
+"7123 Edinger Ave, Huntington Beach",1245000,2500,7000,5,3.0,5,3,1,06/08/2025
+"20145 Brookhurst St, Huntington Beach",935000,1900,5300,3,2.5,18,2,0,01/28/2025
+"3842 Mesa Verde Dr, Costa Mesa",1020000,2050,5700,4,2.5,14,2,0,04/19/2025
+"11567 Warner Ave, Fountain Valley",825000,1750,5200,3,2.0,28,2,0,07/22/2025
+"5234 Bolsa Chica Rd, Huntington Beach",1195000,2350,6800,4,3.5,7,2,1,09/05/2025
+"8401 Talbert Ave, Huntington Beach",860000,1980,5500,4,2.0,32,2,0,11/30/2024
+"14723 Goldenwest St, Westminster",760000,1600,4800,3,2.0,44,1,0,02/22/2025
+"2867 Newport Blvd, Costa Mesa",695000,1350,3800,2,1.5,55,1,0,05/14/2025
+"19432 Yorktown Ave, Huntington Beach",1080000,2150,6100,4,3.0,11,2,1,08/28/2025
+"6215 Hazard Ave, Westminster",735000,1480,4300,3,2.0,48,1,0,12/17/2024
+"16890 Magnolia St, Fountain Valley",905000,1830,5400,3,2.5,19,2,0,03/05/2025
+"4102 Seashore Dr, Huntington Beach",1310000,2650,7800,5,3.5,4,3,1,06/30/2025`;
+
+            analysisSetup.fileName = 'sample_data_socal_sfr.csv';
+            parseCSV(csv);
+        }
+
+        function parseCSV(text) {
+            const lines = text.trim().split('\n');
+            headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+            
+            rawData = [];
+            for (let i = 1; i < lines.length; i++) {
+                const values = parseCSVLine(lines[i]);
+                if (values.length === headers.length) {
+                    const row = {};
+                    headers.forEach((h, idx) => {
+                        row[h] = values[idx];
+                    });
+                    rawData.push(row);
+                }
+            }
+
+            // Detect numeric columns
+            numericColumns = headers.filter(h => {
+                const values = rawData.map(r => parseFloat(r[h])).filter(v => !isNaN(v));
+                return values.length > rawData.length * 0.5;
+            });
+
+            displayPreview();
+            setupVariableSelection();
+        }
+
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let char of line) {
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current.trim());
+            return result;
+        }
+
+        function displayPreview() {
+            rowCount.textContent = rawData.length;
+            
+            let html = '<thead><tr>';
+            headers.forEach(h => {
+                const isNumeric = numericColumns.includes(h);
+                html += `<th>${h} ${isNumeric ? '📊' : '📝'}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+            
+            const previewRows = rawData.slice(0, 8);
+            previewRows.forEach(row => {
+                html += '<tr>';
+                headers.forEach(h => {
+                    html += `<td>${row[h] || '-'}</td>`;
+                });
+                html += '</tr>';
+            });
+            
+            if (rawData.length > 8) {
+                html += `<tr><td colspan="${headers.length}" style="text-align: center; color: #808080;">... and ${rawData.length - 8} more rows</td></tr>`;
+            }
+            
+            html += '</tbody>';
+            previewTable.innerHTML = html;
+            
+            dataPreview.classList.remove('hidden');
+            uploadArea.classList.add('hidden');
+        }
+
+        function setupVariableSelection() {
+            dependentList.innerHTML = numericColumns.map(col => `
+                <div class="variable-item" onclick="selectDependent('${col}')">
+                    <input type="radio" name="dependent" id="dep_${col}" value="${col}">
+                    <label for="dep_${col}">${col}</label>
+                </div>
+            `).join('');
+
+            independentList.innerHTML = numericColumns.map(col => `
+                <div class="variable-item" onclick="toggleIndependent('${col}')">
+                    <input type="checkbox" id="ind_${col}" value="${col}">
+                    <label for="ind_${col}">${col}</label>
+                </div>
+            `).join('');
+
+            variableCard.classList.remove('hidden');
+            variableCard.classList.add('fade-in');
+
+            // Auto-select Sale Price if exists
+            const priceCol = numericColumns.find(c => 
+                c.toLowerCase().includes('price') || 
+                c.toLowerCase().includes('sale') ||
+                c.toLowerCase().includes('value')
+            );
+            if (priceCol) {
+                selectDependent(priceCol);
+            }
+        }
+
+        function selectDependent(col) {
+            selectedDependent = col;
+            document.querySelectorAll('#dependentList .variable-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            const radio = document.getElementById(`dep_${col}`);
+            if (radio) {
+                radio.checked = true;
+                radio.closest('.variable-item').classList.add('selected');
+            }
+
+            selectedIndependent = selectedIndependent.filter(c => c !== col);
+            const checkbox = document.getElementById(`ind_${col}`);
+            if (checkbox) {
+                checkbox.checked = false;
+                checkbox.closest('.variable-item').classList.remove('selected');
+            }
+
+            updateRunButton();
+        }
+
+        function toggleIndependent(col) {
+            if (col === selectedDependent) return;
+            
+            const checkbox = document.getElementById(`ind_${col}`);
+            const item = checkbox.closest('.variable-item');
+            
+            if (selectedIndependent.includes(col)) {
+                selectedIndependent = selectedIndependent.filter(c => c !== col);
+                checkbox.checked = false;
+                item.classList.remove('selected');
+            } else {
+                selectedIndependent.push(col);
+                checkbox.checked = true;
+                item.classList.add('selected');
+            }
+
+            updateRunButton();
+        }
+
+        function updateRunButton() {
+            const ready = selectedDependent && selectedIndependent.length > 0;
+            runAnalysisBtn.disabled = !ready;
+            
+            if (!selectedDependent) {
+                selectionHint.textContent = 'Select a dependent variable (what you want to predict)';
+                selectionHint.style.color = '#808080';
+            } else if (selectedIndependent.length === 0) {
+                selectionHint.textContent = 'Select at least one independent variable (predictor)';
+                selectionHint.style.color = '#808080';
+            } else {
+                selectionHint.textContent = `Ready! Predicting ${selectedDependent} using ${selectedIndependent.length} variable(s)`;
+                selectionHint.style.color = '#4ade80';
+            }
+        }
+
+        runAnalysisBtn.addEventListener('click', runRegression);
+
+        function runRegression() {
+            const y = [];
+            const X = [];
+            const validRows = [];
+
+            rawData.forEach((row, idx) => {
+                const yVal = parseFloat(row[selectedDependent]);
+                const xVals = selectedIndependent.map(col => parseFloat(row[col]));
+                
+                if (!isNaN(yVal) && xVals.every(v => !isNaN(v))) {
+                    y.push(yVal);
+                    X.push([1, ...xVals]);
+                    validRows.push(idx);
+                }
+            });
+
+            const nObs = y.length;
+            const nPred = selectedIndependent.length;
+            const ratio = nObs / nPred;
+
+            // Sample size checks
+            if (nObs < nPred + 2) {
+                showSampleSizeError(`<strong>Cannot run analysis:</strong> You have ${nObs} observations but need at least ${nPred + 2} for ${nPred} predictor(s). Add more comparable sales data before running regression.`);
+                return;
+            }
+
+            // Show sample size warnings before results
+            let sampleWarningsHtml = '';
+            if (ratio < 5) {
+                sampleWarningsHtml += `<div class="warning-box error sample-size-warning"><div class="icon">🛑</div><p><strong>Critical:</strong> Very few observations relative to predictors (${nObs} obs / ${nPred} predictors = ${ratio.toFixed(1)}:1 ratio). Results are unreliable. Consider reducing the number of predictors or adding more comparable sales.</p></div>`;
+            } else if (ratio < 10) {
+                sampleWarningsHtml += `<div class="warning-box sample-size-warning"><div class="icon">⚠️</div><p><strong>Caution:</strong> Sample size is below recommended minimum of 10 observations per predictor (${nObs} obs / ${nPred} predictors = ${ratio.toFixed(1)}:1 ratio). Results should be interpreted with care.</p></div>`;
+            } else if (ratio < 20) {
+                sampleWarningsHtml += `<div class="info-box sample-size-warning"><div class="icon">ℹ️</div><p><strong>Note:</strong> For most robust results, 20+ observations per predictor is recommended (${nObs} obs / ${nPred} predictors = ${ratio.toFixed(1)}:1 ratio).</p></div>`;
+            }
+
+            // Store warnings to inject before results
+            regressionResults = regressionResults || {};
+            regressionResults._sampleWarningsHtml = sampleWarningsHtml;
+
+            // Calculate OLS: β = (X'X)^(-1)X'y
+            let Xt, XtX, XtXinv, Xty, beta;
+            try {
+                Xt = transpose(X);
+                XtX = matMul(Xt, X);
+                XtXinv = invertMatrix(XtX);
+                Xty = matMul(Xt, y);
+                beta = matMul(XtXinv, Xty);
+            } catch (e) {
+                if (e.message === 'SINGULAR_MATRIX') {
+                    showSampleSizeError(`<strong>Unable to compute regression</strong> — your variables may be perfectly correlated (multicollinear). Try removing one of the correlated variables. This can also happen if a variable has no variation or is a linear combination of other variables.`);
+                    return;
+                }
+                throw e;
+            }
+
+            const predictions = X.map(row => row.reduce((sum, val, i) => sum + val * beta[i], 0));
+            const residuals = y.map((yi, i) => yi - predictions[i]);
+
+            const yMean = y.reduce((a, b) => a + b, 0) / y.length;
+            const ssTot = y.reduce((sum, yi) => sum + Math.pow(yi - yMean, 2), 0);
+            const ssRes = residuals.reduce((sum, r) => sum + r * r, 0);
+            const rSquared = 1 - (ssRes / ssTot);
+
+            const n = y.length;
+            const p = selectedIndependent.length;
+            const adjRSquared = 1 - ((1 - rSquared) * (n - 1) / (n - p - 1));
+
+            const mse = ssRes / (n - p - 1);
+            const varBeta = XtXinv.map(row => row.map(val => val * mse));
+            const stdErrors = varBeta.map((row, i) => Math.sqrt(row[i]));
+
+            const tStats = beta.map((b, i) => b / stdErrors[i]);
+            const pValues = tStats.map(t => 2 * (1 - tCDF(Math.abs(t), n - p - 1)));
+
+            // F-statistic
+            const ssReg = ssTot - ssRes;
+            const fStat = (ssReg / p) / (ssRes / (n - p - 1));
+
+            regressionResults = {
+                beta,
+                stdErrors,
+                tStats,
+                pValues,
+                rSquared,
+                adjRSquared,
+                n,
+                p,
+                mse,
+                fStat,
+                predictions,
+                residuals,
+                y,
+                validRows,
+                analysisCompletedAt: new Date().toISOString()
+            };
+
+            displayResults();
+        }
+
+        function showSampleSizeError(message) {
+            // Show error in results card area
+            resultsCard.classList.remove('hidden');
+            resultsCard.scrollIntoView({ behavior: 'smooth' });
+            let warningsContainer = document.getElementById('warningsContainer');
+            if (!warningsContainer) {
+                warningsContainer = document.createElement('div');
+                warningsContainer.id = 'warningsContainer';
+                resultsCard.querySelector('h2').after(warningsContainer);
+            }
+            warningsContainer.innerHTML = `<div class="warning-box error"><div class="icon">🛑</div><p>${message}</p></div>`;
+            // Hide everything else in results
+            document.getElementById('statsGrid').innerHTML = '';
+            document.getElementById('equationBox').style.display = 'none';
+            document.getElementById('coefBody').innerHTML = '';
+            document.getElementById('chartsGrid').innerHTML = '';
+        }
+
+        function calculateCorrelationMatrix() {
+            const vars = [selectedDependent, ...selectedIndependent];
+            const matrix = [];
+            const validData = rawData.filter(row => {
+                return vars.every(v => !isNaN(parseFloat(row[v])));
+            });
+
+            for (let i = 0; i < vars.length; i++) {
+                matrix[i] = [];
+                for (let j = 0; j < vars.length; j++) {
+                    if (i === j) {
+                        matrix[i][j] = 1;
+                    } else if (j < i) {
+                        matrix[i][j] = matrix[j][i];
+                    } else {
+                        const xi = validData.map(r => parseFloat(r[vars[i]]));
+                        const xj = validData.map(r => parseFloat(r[vars[j]]));
+                        matrix[i][j] = correlation(xi, xj);
+                    }
+                }
+            }
+            return { matrix, vars };
+        }
+
+        function correlation(x, y) {
+            const n = x.length;
+            const sumX = x.reduce((a, b) => a + b, 0);
+            const sumY = y.reduce((a, b) => a + b, 0);
+            const sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0);
+            const sumX2 = x.reduce((sum, xi) => sum + xi * xi, 0);
+            const sumY2 = y.reduce((sum, yi) => sum + yi * yi, 0);
+            
+            const num = n * sumXY - sumX * sumY;
+            const den = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
+            
+            return den === 0 ? 0 : num / den;
+        }
+
+        function calculateVIF() {
+            // Calculate VIF for each independent variable
+            const vifResults = [];
+            
+            selectedIndependent.forEach((targetVar, targetIdx) => {
+                // Regress this variable against all other independent variables
+                const otherVars = selectedIndependent.filter((_, i) => i !== targetIdx);
+                
+                if (otherVars.length === 0) {
+                    vifResults.push({ variable: targetVar, vif: 1 });
+                    return;
+                }
+
+                const validData = rawData.filter(row => {
+                    return [targetVar, ...otherVars].every(v => !isNaN(parseFloat(row[v])));
+                });
+
+                const y = validData.map(r => parseFloat(r[targetVar]));
+                const X = validData.map(r => [1, ...otherVars.map(v => parseFloat(r[v]))]);
+
+                // Simple R² calculation for this regression
+                const yMean = y.reduce((a, b) => a + b, 0) / y.length;
+                
+                try {
+                    const Xt = transpose(X);
+                    const XtX = matMul(Xt, X);
+                    const XtXinv = invertMatrix(XtX);
+                    const Xty = matMul(Xt, y);
+                    const beta = matMul(XtXinv, Xty);
+                    
+                    const predictions = X.map(row => row.reduce((sum, val, i) => sum + val * beta[i], 0));
+                    const ssTot = y.reduce((sum, yi) => sum + Math.pow(yi - yMean, 2), 0);
+                    const ssRes = y.reduce((sum, yi, i) => sum + Math.pow(yi - predictions[i], 2), 0);
+                    const r2 = 1 - (ssRes / ssTot);
+                    
+                    const vif = 1 / (1 - r2);
+                    vifResults.push({ variable: targetVar, vif: isFinite(vif) ? vif : 999 });
+                } catch (e) {
+                    vifResults.push({ variable: targetVar, vif: 1 });
+                }
+            });
+
+            return vifResults;
+        }
+
+        function detectOutliers() {
+            const { residuals, y, validRows } = regressionResults;
+            const stdResiduals = [];
+            
+            // Calculate standardized residuals
+            const residMean = residuals.reduce((a, b) => a + b, 0) / residuals.length;
+            const residStd = Math.sqrt(residuals.reduce((sum, r) => sum + Math.pow(r - residMean, 2), 0) / (residuals.length - 1));
+            
+            const outliers = [];
+            residuals.forEach((r, i) => {
+                const stdResid = (r - residMean) / residStd;
+                stdResiduals.push(stdResid);
+                
+                if (Math.abs(stdResid) > 2.5) {
+                    const rowIdx = validRows[i];
+                    const row = rawData[rowIdx];
+                    outliers.push({
+                        index: rowIdx + 1,
+                        address: row['Address'] || row[headers[0]] || `Row ${rowIdx + 1}`,
+                        actualPrice: y[i],
+                        predictedPrice: regressionResults.predictions[i],
+                        residual: r,
+                        stdResidual: stdResid
+                    });
+                }
+            });
+
+            return { outliers, stdResiduals };
+        }
+
+        function getConfidenceInterval(coef, stdError, df, confidence = 0.95) {
+            // t-value for 95% confidence
+            const alpha = 1 - confidence;
+            const tValue = getTValue(alpha / 2, df);
+            
+            const lower = coef - tValue * stdError;
+            const upper = coef + tValue * stdError;
+            
+            return { lower, upper, tValue };
+        }
+
+        function getTValue(alpha, df) {
+            // Proper inverse t-distribution via bisection on tCDF
+            return tInverseCDF(1 - alpha, df);
+        }
+
+        function tInverseCDF(p, df) {
+            // Find t such that tCDF(t, df) = p using bisection + Newton refinement
+            if (p <= 0) return -Infinity;
+            if (p >= 1) return Infinity;
+            if (p === 0.5) return 0;
+
+            // Initial bracket
+            let lo = -1000, hi = 1000;
+
+            // Narrow bracket with bisection
+            for (let i = 0; i < 100; i++) {
+                const mid = (lo + hi) / 2;
+                const cdf = tCDF(mid, df);
+                if (cdf < p) {
+                    lo = mid;
+                } else {
+                    hi = mid;
+                }
+                if (hi - lo < 1e-12) break;
+            }
+
+            return (lo + hi) / 2;
+        }
+
+        function displayResults() {
+            const { beta, stdErrors, tStats, pValues, rSquared, adjRSquared, n, p, mse, fStat } = regressionResults;
+
+            // Restore equation box visibility
+            document.getElementById('equationBox').style.display = '';
+
+            // Analysis info in results
+            document.getElementById('resultsAnalysisInfo').innerHTML = `
+                <div class="analysis-info-item">
+                    <span class="label">Appraiser</span>
+                    <span class="value">${analysisSetup.appraiserName}</span>
+                </div>
+                <div class="analysis-info-item">
+                    <span class="label">Effective Date</span>
+                    <span class="value">${formatDate(analysisSetup.effectiveDate)}</span>
+                </div>
+                <div class="analysis-info-item">
+                    <span class="label">Market Area</span>
+                    <span class="value">${analysisSetup.marketArea}</span>
+                </div>
+                <div class="analysis-info-item">
+                    <span class="label">Analysis Completed</span>
+                    <span class="value">${new Date().toLocaleString()}</span>
+                </div>
+            `;
+
+            // Calculate diagnostics
+            const df = n - p - 1;
+            const correlationData = calculateCorrelationMatrix();
+            const vifData = calculateVIF();
+            const outlierData = detectOutliers();
+            
+            // Store for later use
+            regressionResults.correlationMatrix = correlationData;
+            regressionResults.vif = vifData;
+            regressionResults.outliers = outlierData.outliers;
+
+            // Warnings Section
+            let warningsHtml = '';
+            
+            // Sample size warning
+            const sampleRatio = n / p;
+            if (sampleRatio < 10) {
+                warningsHtml += `
+                    <div class="warning-box ${sampleRatio < 5 ? 'error' : ''}">
+                        <div class="icon">⚠️</div>
+                        <p><strong>Sample Size Concern:</strong> You have ${n} observations with ${p} predictor variables (ratio: ${sampleRatio.toFixed(1)}:1). 
+                        Statistical best practice recommends at least 10-20 observations per predictor. Results should be interpreted with caution and reconciled with other valuation methods.</p>
+                    </div>
+                `;
+            }
+
+            // Multicollinearity warning (VIF > 5)
+            const highVif = vifData.filter(v => v.vif > 5);
+            if (highVif.length > 0) {
+                warningsHtml += `
+                    <div class="warning-box">
+                        <div class="icon">⚠️</div>
+                        <p><strong>Multicollinearity Detected:</strong> The following variables have high VIF values (>5): 
+                        ${highVif.map(v => `${v.variable} (VIF: ${v.vif.toFixed(1)})`).join(', ')}. 
+                        This means these variables are highly correlated with other predictors, which can make individual coefficient estimates less reliable. 
+                        Consider removing one of the correlated variables or using caution when interpreting these coefficients individually.</p>
+                    </div>
+                `;
+            }
+
+            // Check for high correlations between independent variables
+            const highCorrs = [];
+            for (let i = 1; i < correlationData.vars.length; i++) {
+                for (let j = i + 1; j < correlationData.vars.length; j++) {
+                    const corr = Math.abs(correlationData.matrix[i][j]);
+                    if (corr > 0.7) {
+                        highCorrs.push({ var1: correlationData.vars[i], var2: correlationData.vars[j], corr });
+                    }
+                }
+            }
+
+            // Insert warnings before stats
+            const resultsCard = document.getElementById('resultsCard');
+            let warningsContainer = document.getElementById('warningsContainer');
+            if (!warningsContainer) {
+                warningsContainer = document.createElement('div');
+                warningsContainer.id = 'warningsContainer';
+                resultsCard.querySelector('h2').after(warningsContainer);
+            }
+            warningsContainer.innerHTML = (regressionResults._sampleWarningsHtml || '') + warningsHtml;
+
+            // ADJUSTMENT SUMMARY TABLE (The Money Table)
+            let summaryHtml = `
+                <div class="adjustment-summary">
+                    <h3>💰 Adjustment Summary (The Money Table)</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Variable</th>
+                                <th>Adjustment</th>
+                                <th>95% Confidence Interval</th>
+                                <th>Significant?</th>
+                                <th>VIF</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            selectedIndependent.forEach((col, i) => {
+                const coef = beta[i + 1];
+                const ci = getConfidenceInterval(coef, stdErrors[i + 1], df);
+                const sig = pValues[i + 1] < 0.05;
+                const vif = vifData.find(v => v.variable === col)?.vif || 1;
+                const vifWarning = vif > 5 ? ' ⚠️' : vif > 2.5 ? ' ⚡' : '';
+                
+                const coefStr = formatCurrency(coef);
+                const ciLower = formatCurrency(ci.lower);
+                const ciUpper = formatCurrency(ci.upper);
+
+                summaryHtml += `
+                    <tr>
+                        <td><strong>${col}</strong></td>
+                        <td>${coefStr}</td>
+                        <td><span class="ci-range">${ciLower} to ${ciUpper}</span></td>
+                        <td class="${sig ? 'sig-yes' : 'sig-no'}">${sig ? '✓ Yes (p=' + pValues[i + 1].toFixed(3) + ')' : 'No (p=' + pValues[i + 1].toFixed(3) + ')'}</td>
+                        <td>${vif.toFixed(1)}${vifWarning}</td>
+                    </tr>
+                `;
+            });
+
+            summaryHtml += `
+                        </tbody>
+                    </table>
+                    <p style="font-size: 12px; color: #808080; margin-top: 15px;">
+                        VIF > 5 ⚠️ indicates high multicollinearity | VIF > 2.5 ⚡ indicates moderate multicollinearity<br>
+                        Confidence intervals show the range where the true market adjustment likely falls (95% confidence)
+                    </p>
+                </div>
+            `;
+
+            // Insert adjustment summary
+            let summaryContainer = document.getElementById('adjustmentSummaryContainer');
+            if (!summaryContainer) {
+                summaryContainer = document.createElement('div');
+                summaryContainer.id = 'adjustmentSummaryContainer';
+                warningsContainer.after(summaryContainer);
+            }
+            summaryContainer.innerHTML = summaryHtml;
+
+            // CORRELATION MATRIX
+            let corrHtml = `
+                <div class="correlation-section">
+                    <h4>📊 Correlation Matrix & Multicollinearity Check</h4>
+                    <div class="correlation-matrix">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    ${correlationData.vars.map(v => `<th>${v.substring(0, 10)}</th>`).join('')}
+                                </tr>
+                            </thead>
+                            <tbody>
+            `;
+
+            correlationData.vars.forEach((var1, i) => {
+                corrHtml += `<tr><th>${var1.substring(0, 10)}</th>`;
+                correlationData.vars.forEach((var2, j) => {
+                    const corr = correlationData.matrix[i][j];
+                    const absCorr = Math.abs(corr);
+                    let cellClass = '';
+                    // Only flag high correlations between independent variables (not with dependent)
+                    if (i !== j && i > 0 && j > 0) {
+                        if (absCorr > 0.8) cellClass = 'high-corr';
+                        else if (absCorr > 0.6) cellClass = 'med-corr';
+                    }
+                    corrHtml += `<td class="${cellClass}">${corr.toFixed(2)}</td>`;
+                });
+                corrHtml += '</tr>';
+            });
+
+            corrHtml += `
+                            </tbody>
+                        </table>
+                    </div>
+                    <p style="font-size: 12px; color: #808080; margin-top: 10px;">
+                        <span style="color: #fca5a5;">■</span> High correlation (>0.8) | 
+                        <span style="color: #fcd34d;">■</span> Moderate correlation (>0.6) between independent variables
+                    </p>
+                </div>
+            `;
+
+            // Insert correlation matrix
+            let corrContainer = document.getElementById('correlationContainer');
+            if (!corrContainer) {
+                corrContainer = document.createElement('div');
+                corrContainer.id = 'correlationContainer';
+                summaryContainer.after(corrContainer);
+            }
+            corrContainer.innerHTML = corrHtml;
+
+            // OUTLIER DETECTION
+            if (outlierData.outliers.length > 0) {
+                let outlierHtml = `
+                    <div class="outlier-section">
+                        <h4>🔍 Potential Outliers Detected</h4>
+                        <p>The following observations have standardized residuals > 2.5, indicating they may be unusual sales that could be affecting your results. 
+                        Review these sales for data accuracy, atypical conditions of sale, or property characteristics not captured in the model.</p>
+                        <table class="outlier-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Property</th>
+                                    <th>Actual Price</th>
+                                    <th>Predicted</th>
+                                    <th>Difference</th>
+                                    <th>Std. Residual</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                outlierData.outliers.forEach(o => {
+                    outlierHtml += `
+                        <tr>
+                            <td>${o.index}</td>
+                            <td>${o.address}</td>
+                            <td>$${o.actualPrice.toLocaleString()}</td>
+                            <td>$${o.predictedPrice.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
+                            <td>$${o.residual.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
+                            <td style="color: #fca5a5; font-weight: 600;">${o.stdResidual.toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+
+                outlierHtml += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+                let outlierContainer = document.getElementById('outlierContainer');
+                if (!outlierContainer) {
+                    outlierContainer = document.createElement('div');
+                    outlierContainer.id = 'outlierContainer';
+                    corrContainer.after(outlierContainer);
+                }
+                outlierContainer.innerHTML = outlierHtml;
+            } else {
+                let outlierContainer = document.getElementById('outlierContainer');
+                if (outlierContainer) outlierContainer.innerHTML = '';
+            }
+
+            // Stats grid
+            const statsGrid = document.getElementById('statsGrid');
+            const rClass = rSquared > 0.7 ? 'good' : rSquared > 0.4 ? 'warning' : 'bad';
+            
+            statsGrid.innerHTML = `
+                <div class="stat-card ${rClass}">
+                    <div class="value">${(rSquared * 100).toFixed(1)}%</div>
+                    <div class="label">R-Squared</div>
+                </div>
+                <div class="stat-card ${rClass}">
+                    <div class="value">${(adjRSquared * 100).toFixed(1)}%</div>
+                    <div class="label">Adjusted R²</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value">${n}</div>
+                    <div class="label">Observations</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value">${p}</div>
+                    <div class="label">Predictors</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value">$${Math.sqrt(mse).toLocaleString(undefined, {maximumFractionDigits: 0})}</div>
+                    <div class="label">Std Error (RMSE)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value">${fStat.toFixed(2)}</div>
+                    <div class="label">F-Statistic</div>
+                </div>
+            `;
+
+            // Equation
+            const equation = document.getElementById('equation');
+            let eqStr = `${selectedDependent} = ${formatNumber(beta[0])}`;
+            selectedIndependent.forEach((col, i) => {
+                const sign = beta[i + 1] >= 0 ? ' + ' : ' - ';
+                eqStr += `${sign}${formatNumber(Math.abs(beta[i + 1]))} × ${col}`;
+            });
+            equation.textContent = eqStr;
+
+            // Coefficients table
+            const coefBody = document.getElementById('coefBody');
+            coefBody.innerHTML = '';
+            
+            const interceptCI = getConfidenceInterval(beta[0], stdErrors[0], df);
+            coefBody.innerHTML += `
+                <tr>
+                    <td><strong>Intercept</strong></td>
+                    <td>${formatNumber(beta[0])}</td>
+                    <td style="font-size: 12px; color: #a0a0a0;">${formatNumber(interceptCI.lower)} to ${formatNumber(interceptCI.upper)}</td>
+                    <td>${formatNumber(stdErrors[0])}</td>
+                    <td>${tStats[0].toFixed(2)}</td>
+                    <td>${formatPValue(pValues[0])}</td>
+                    <td class="interpretation">Base value when all variables are zero</td>
+                </tr>
+            `;
+
+            selectedIndependent.forEach((col, i) => {
+                const coef = beta[i + 1];
+                const ci = getConfidenceInterval(coef, stdErrors[i + 1], df);
+                const interpretation = generateInterpretation(col, coef, selectedDependent);
+                const sigClass = pValues[i + 1] < 0.05 ? 'style="color: #4ade80;"' : 'style="color: #fbbf24;"';
+                
+                coefBody.innerHTML += `
+                    <tr>
+                        <td><strong>${col}</strong></td>
+                        <td>${formatNumber(coef)}</td>
+                        <td style="font-size: 12px; color: #a0a0a0;">${formatCurrency(ci.lower)} to ${formatCurrency(ci.upper)}</td>
+                        <td>${formatNumber(stdErrors[i + 1])}</td>
+                        <td>${tStats[i + 1].toFixed(2)}</td>
+                        <td ${sigClass}>${formatPValue(pValues[i + 1])}</td>
+                        <td class="interpretation">${interpretation}</td>
+                    </tr>
+                `;
+            });
+
+            createCharts();
+            generateCommentary();
+            generateWorkFile();
+
+            resultsCard.classList.remove('hidden');
+            resultsCard.classList.add('fade-in');
+            resultsCard.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function generateInterpretation(variable, coefficient, dependent) {
+            const varLower = variable.toLowerCase();
+            const coefAbs = Math.abs(coefficient);
+            const direction = coefficient >= 0 ? 'increases' : 'decreases';
+            const directionAlt = coefficient >= 0 ? 'adds' : 'reduces';
+
+            let coefStr;
+            if (coefAbs >= 1000) {
+                coefStr = '$' + coefAbs.toLocaleString(undefined, {maximumFractionDigits: 0});
+            } else if (coefAbs >= 1) {
+                coefStr = '$' + coefAbs.toFixed(2);
+            } else {
+                coefStr = '$' + coefAbs.toFixed(4);
+            }
+
+            if (varLower.includes('sqft') || varLower.includes('sq ft') || varLower.includes('square') || varLower.includes('gla') || varLower.includes('area')) {
+                return `Each additional square foot ${directionAlt} ${coefStr} to the ${dependent}`;
+            } else if (varLower.includes('bed')) {
+                return `Each additional bedroom ${directionAlt} ${coefStr} to the ${dependent}`;
+            } else if (varLower.includes('bath')) {
+                return `Each additional bathroom ${directionAlt} ${coefStr} to the ${dependent}`;
+            } else if (varLower.includes('age') || varLower.includes('year')) {
+                return `Each year of age ${direction} ${dependent} by ${coefStr}`;
+            } else if (varLower.includes('lot')) {
+                return `Each additional unit of lot size ${directionAlt} ${coefStr} to the ${dependent}`;
+            } else if (varLower.includes('garage') || varLower.includes('car')) {
+                return `Each garage space ${directionAlt} ${coefStr} to the ${dependent}`;
+            } else if (varLower.includes('pool')) {
+                return `Having a pool ${directionAlt} ${coefStr} to the ${dependent}`;
+            } else if (varLower.includes('view')) {
+                return `View quality/rating ${directionAlt} ${coefStr} per point to the ${dependent}`;
+            } else {
+                return `Each unit increase in ${variable} ${direction} ${dependent} by ${coefStr}`;
+            }
+        }
+
+        function generateCommentary() {
+            const { beta, stdErrors, rSquared, adjRSquared, n, p, pValues } = regressionResults;
+
+            // Methodology Statement
+            document.getElementById('methodologyText').textContent = 
+                `A multiple regression analysis was performed to derive market-based adjustments for ${analysisSetup.propertyType ? analysisSetup.propertyType.toLowerCase() : 'residential'} properties in the ${analysisSetup.marketArea || 'subject'} market area. The analysis utilized ${n} comparable sales from ${analysisSetup.dataSource || 'verified sources'}${analysisSetup.dateRange ? `, covering the period ${analysisSetup.dateRange}` : ''}. The dependent variable was ${selectedDependent}, with ${selectedIndependent.join(', ')} serving as independent variables. This statistical approach isolates the contributory value of each property characteristic while controlling for the effects of other variables, providing market-derived support for the adjustments applied in this appraisal.`;
+
+            // Results Summary
+            const rSquaredPct = (rSquared * 100).toFixed(1);
+            const adjRSquaredPct = (adjRSquared * 100).toFixed(1);
+            let modelQuality = rSquared > 0.8 ? 'excellent' : rSquared > 0.6 ? 'good' : rSquared > 0.4 ? 'moderate' : 'limited';
+            
+            document.getElementById('resultsText').textContent = 
+                `The regression model demonstrates ${modelQuality} explanatory power with an R-squared of ${rSquaredPct}% (Adjusted R-squared: ${adjRSquaredPct}%), indicating that approximately ${rSquaredPct}% of the variation in ${selectedDependent.toLowerCase()} can be explained by the selected property characteristics. The model is based on ${n} observations and ${p} predictor variable${p > 1 ? 's' : ''}. These results provide statistically supported evidence for the adjustments applied in the sales comparison approach.`;
+
+            // Adjustments Support with confidence intervals
+            const df = n - p - 1;
+            let sigVars = [];
+            let nonsigVars = [];
+            selectedIndependent.forEach((col, i) => {
+                const coef = beta[i + 1];
+                const pVal = pValues[i + 1];
+                const ci = getConfidenceInterval(coef, stdErrors[i + 1], df);
+                const coefStr = Math.abs(coef) >= 1000 ? 
+                    '$' + Math.abs(coef).toLocaleString(undefined, {maximumFractionDigits: 0}) :
+                    '$' + Math.abs(coef).toFixed(2);
+                const ciStr = `${formatCurrency(ci.lower)} to ${formatCurrency(ci.upper)}`;
+                const direction = coef >= 0 ? 'positive' : 'negative';
+                
+                if (pVal < 0.05) {
+                    sigVars.push(`${col} (${direction} ${coefStr}, 95% CI: ${ciStr})`);
+                } else {
+                    nonsigVars.push(col);
+                }
+            });
+
+            let adjText = `The analysis indicates the following market-derived adjustments with 95% confidence intervals: `;
+            if (sigVars.length > 0) {
+                adjText += `Statistically significant relationships (p < 0.05) were found for ${sigVars.join('; ')}. `;
+            }
+            if (nonsigVars.length > 0) {
+                adjText += `Variables showing weaker statistical significance include ${nonsigVars.join(', ')}, which may warrant additional market support or reconciliation with paired sales analysis.`;
+            }
+            document.getElementById('adjustmentsText').textContent = adjText;
+
+            // Conclusion
+            document.getElementById('conclusionText').textContent = 
+                `Based on this regression analysis, the adjustments applied in the sales comparison approach are supported by market data from the ${analysisSetup.marketArea} area. The statistical methodology provides an objective, replicable basis for the adjustments, consistent with USPAP requirements for credible appraisal results. The complete methodology, data, and calculations are retained in the appraiser's work file and are available for review upon request.`;
+        }
+
+        function generateWorkFile() {
+            const { beta, stdErrors, tStats, pValues, rSquared, adjRSquared, n, p, mse, fStat, predictions, residuals, y } = regressionResults;
+
+            let workfile = `
+================================================================================
+                    REGRESSION ANALYSIS - WORK FILE DOCUMENTATION
+                    AI for Appraisers | VuVu Global
+================================================================================
+
+DOCUMENT CONTROL
+----------------
+Generated:              ${new Date().toLocaleString()}
+Analysis ID:            ${generateAnalysisId()}
+Software:               Appraisal Regression Toolkit v${VERSION}
+
+================================================================================
+SECTION 1: ANALYSIS SETUP & APPRAISER CERTIFICATION
+================================================================================
+
+Appraiser Name:         ${analysisSetup.appraiserName}
+License Number:         ${analysisSetup.licenseNumber || 'Not provided'}
+Effective Date:         ${formatDate(analysisSetup.effectiveDate)}
+Analysis Purpose:       ${analysisSetup.analysisPurpose}
+
+Property Type:          ${analysisSetup.propertyType}
+Market Area:            ${analysisSetup.marketArea}
+Data Source:            ${analysisSetup.dataSource}
+Date Range of Sales:    ${analysisSetup.dateRange || 'Not specified'}
+Data File:              ${analysisSetup.fileName || 'Direct input'}
+
+Additional Notes:
+${analysisSetup.additionalNotes || 'None'}
+
+DATA VERIFICATION: The appraiser has certified that the comparable sales data 
+used in this analysis has been verified for accuracy.
+
+================================================================================
+SECTION 2: DATA SUMMARY
+================================================================================
+
+Total Comparable Sales: ${rawData.length}
+Valid Observations:     ${n} (after removing incomplete records)
+Records Excluded:       ${rawData.length - n}
+
+Variables in Dataset:   ${headers.join(', ')}
+
+Numeric Variables:      ${numericColumns.join(', ')}
+
+================================================================================
+SECTION 3: MODEL SPECIFICATION
+================================================================================
+
+Dependent Variable:     ${selectedDependent}
+Independent Variables:  ${selectedIndependent.join(', ')}
+
+Model Type:             Ordinary Least Squares (OLS) Multiple Regression
+Estimation Method:      Matrix algebra solution: β = (X'X)⁻¹X'y
+
+================================================================================
+SECTION 4: REGRESSION RESULTS
+================================================================================
+
+MODEL FIT STATISTICS
+--------------------
+R-Squared:              ${(rSquared * 100).toFixed(4)}%
+Adjusted R-Squared:     ${(adjRSquared * 100).toFixed(4)}%
+Standard Error (RMSE):  $${Math.sqrt(mse).toLocaleString(undefined, {maximumFractionDigits: 2})}
+F-Statistic:            ${fStat.toFixed(4)}
+Observations (n):       ${n}
+Predictors (p):         ${p}
+Degrees of Freedom:     ${n - p - 1}
+
+REGRESSION EQUATION
+-------------------
+${selectedDependent} = ${formatNumber(beta[0])}${selectedIndependent.map((col, i) => {
+    const sign = beta[i + 1] >= 0 ? ' + ' : ' - ';
+    return `${sign}${formatNumber(Math.abs(beta[i + 1]))} × ${col}`;
+}).join('')}
+
+COEFFICIENT DETAILS WITH 95% CONFIDENCE INTERVALS
+-------------------------------------------------
+${'Variable'.padEnd(18)} ${'Coefficient'.padEnd(14)} ${'95% CI Lower'.padEnd(14)} ${'95% CI Upper'.padEnd(14)} ${'P-Value'.padEnd(10)} ${'Sig.'}
+${'-'.repeat(85)}
+${(() => {
+    const df = n - p - 1;
+    const intCI = getConfidenceInterval(beta[0], stdErrors[0], df);
+    return `${'Intercept'.padEnd(18)} ${formatNumber(beta[0]).padEnd(14)} ${formatNumber(intCI.lower).padEnd(14)} ${formatNumber(intCI.upper).padEnd(14)} ${pValues[0].toFixed(4).padEnd(10)} ${pValues[0] < 0.05 ? '*' : ''}`;
+})()}
+${selectedIndependent.map((col, i) => {
+    const df = n - p - 1;
+    const ci = getConfidenceInterval(beta[i + 1], stdErrors[i + 1], df);
+    return `${col.substring(0, 17).padEnd(18)} ${formatNumber(beta[i + 1]).padEnd(14)} ${formatNumber(ci.lower).padEnd(14)} ${formatNumber(ci.upper).padEnd(14)} ${pValues[i + 1].toFixed(4).padEnd(10)} ${pValues[i + 1] < 0.05 ? '*' : ''}`;
+}).join('\n')}
+
+* Statistically significant at α = 0.05
+
+VARIANCE INFLATION FACTORS (VIF) - MULTICOLLINEARITY CHECK
+----------------------------------------------------------
+${regressionResults.vif ? regressionResults.vif.map(v => 
+    `${v.variable.padEnd(20)} VIF: ${v.vif.toFixed(2)}${v.vif > 5 ? '  ⚠️ HIGH - Consider removing' : v.vif > 2.5 ? '  ⚡ MODERATE' : '  ✓ OK'}`
+).join('\n') : 'Not calculated'}
+
+Note: VIF > 5 indicates high multicollinearity; VIF > 10 is severe.
+High VIF means the variable is highly correlated with other predictors,
+which can make individual coefficient estimates unreliable.
+
+${regressionResults.outliers && regressionResults.outliers.length > 0 ? `
+POTENTIAL OUTLIERS DETECTED
+---------------------------
+The following observations have standardized residuals > 2.5:
+
+${regressionResults.outliers.map(o => 
+    `Row ${o.index}: ${o.address}
+    Actual: $${o.actualPrice.toLocaleString()} | Predicted: $${o.predictedPrice.toLocaleString(undefined, {maximumFractionDigits: 0})}
+    Residual: $${o.residual.toLocaleString(undefined, {maximumFractionDigits: 0})} | Std. Residual: ${o.stdResidual.toFixed(2)}
+`).join('\n')}
+Review these sales for data accuracy or atypical conditions of sale.
+` : ''}
+
+INTERPRETATION OF COEFFICIENTS
+------------------------------
+${selectedIndependent.map((col, i) => `• ${col}: ${generateInterpretation(col, beta[i + 1], selectedDependent)}`).join('\n')}
+
+================================================================================
+SECTION 5: RESIDUAL ANALYSIS
+================================================================================
+
+Residual Statistics:
+- Mean:                 ${(residuals.reduce((a,b) => a+b, 0) / residuals.length).toFixed(2)}
+- Std Deviation:        ${Math.sqrt(residuals.reduce((sum, r) => sum + r*r, 0) / (residuals.length - 1)).toFixed(2)}
+- Minimum:              ${Math.min(...residuals).toFixed(2)}
+- Maximum:              ${Math.max(...residuals).toFixed(2)}
+
+================================================================================
+SECTION 6: REPLICATION INSTRUCTIONS
+================================================================================
+
+To replicate this analysis:
+
+1. DATA PREPARATION
+   - Obtain comparable sales data from: ${analysisSetup.dataSource}
+   - Include the following variables: ${[selectedDependent, ...selectedIndependent].join(', ')}
+   - Verify all data for accuracy before analysis
+
+2. SOFTWARE REQUIREMENTS
+   - Any statistical software capable of OLS regression (Excel, SPSS, R, Python)
+   - Or use the Appraisal Regression Toolkit at [URL]
+
+3. ANALYSIS STEPS
+   a. Import the CSV data file
+   b. Set ${selectedDependent} as the dependent variable
+   c. Set ${selectedIndependent.join(', ')} as independent variables
+   d. Run ordinary least squares (OLS) regression
+   e. Compare results to this documentation
+
+4. EXPECTED RESULTS
+   - R-Squared should be approximately ${(rSquared * 100).toFixed(1)}%
+   - Coefficients should match within rounding tolerance
+
+================================================================================
+SECTION 7: APPRAISER CERTIFICATION
+================================================================================
+
+I certify that:
+1. The data used in this analysis was obtained from reliable sources and 
+   verified for accuracy.
+2. The statistical methodology is appropriate for the analysis purpose.
+3. The results are presented accurately and without bias.
+4. This analysis was performed in accordance with USPAP standards.
+
+Appraiser: ${analysisSetup.appraiserName}
+Date: ${formatDate(analysisSetup.effectiveDate)}
+
+================================================================================
+                    END OF WORK FILE DOCUMENTATION
+                    Analysis ID: ${generateAnalysisId()}
+================================================================================
+`;
+
+            document.getElementById('workfilePreview').textContent = workfile;
+        }
+
+        function generateAnalysisId() {
+            const date = new Date();
+            const dateStr = date.toISOString().split('T')[0].replace(/-/g, '');
+            const timeStr = date.toTimeString().split(' ')[0].replace(/:/g, '').substring(0, 6);
+            return `REG-${dateStr}-${timeStr}`;
+        }
+
+        function copyCommentary(sectionId) {
+            const section = document.getElementById(sectionId);
+            const text = section.querySelector('p').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = section.querySelector('.copy-btn');
+                btn.textContent = '✓ Copied!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = '📋 Copy';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        function createCharts() {
+            const chartsGrid = document.getElementById('chartsGrid');
+            
+            charts.forEach(c => c.destroy());
+            charts = [];
+
+            chartsGrid.innerHTML = `
+                <div class="chart-container">
+                    <h3>📈 Actual vs Predicted Values</h3>
+                    <div class="chart-wrapper"><canvas id="actualVsPredicted"></canvas></div>
+                </div>
+                <div class="chart-container">
+                    <h3>📉 Residuals vs Predicted (Heteroscedasticity Check)</h3>
+                    <div class="chart-wrapper"><canvas id="residualsVsPredicted"></canvas></div>
+                </div>
+                <div class="chart-container">
+                    <h3>📊 Residuals Distribution</h3>
+                    <div class="chart-wrapper"><canvas id="residualsChart"></canvas></div>
+                </div>
+            `;
+
+            selectedIndependent.slice(0, 3).forEach((col, idx) => {
+                chartsGrid.innerHTML += `
+                    <div class="chart-container">
+                        <h3>🔵 ${selectedDependent} vs ${col}</h3>
+                        <div class="chart-wrapper"><canvas id="scatter_${idx}"></canvas></div>
+                    </div>
+                `;
+            });
+
+            // Actual vs Predicted
+            const ctx1 = document.getElementById('actualVsPredicted').getContext('2d');
+            const { y, predictions } = regressionResults;
+            
+            charts.push(new Chart(ctx1, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Properties',
+                        data: y.map((yi, i) => ({ x: predictions[i], y: yi })),
+                        backgroundColor: 'rgba(233, 69, 96, 0.6)',
+                        borderColor: 'rgba(233, 69, 96, 1)',
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        annotation: {
+                            annotations: {
+                                line1: {
+                                    type: 'line',
+                                    yMin: Math.min(...y),
+                                    yMax: Math.max(...y),
+                                    xMin: Math.min(...y),
+                                    xMax: Math.max(...y),
+                                    borderColor: 'rgba(74, 222, 128, 0.8)',
+                                    borderWidth: 2,
+                                    borderDash: [5, 5]
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Predicted', color: '#b0b0b0' },
+                            ticks: { color: '#808080' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Actual', color: '#b0b0b0' },
+                            ticks: { color: '#808080' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        }
+                    }
+                }
+            }));
+
+            // Residuals vs Predicted (Heteroscedasticity check)
+            const ctx2a = document.getElementById('residualsVsPredicted').getContext('2d');
+            charts.push(new Chart(ctx2a, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Residuals',
+                        data: predictions.map((pred, i) => ({ x: pred, y: regressionResults.residuals[i] })),
+                        backgroundColor: 'rgba(251, 191, 36, 0.6)',
+                        borderColor: 'rgba(251, 191, 36, 1)',
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        annotation: {
+                            annotations: {
+                                zeroLine: {
+                                    type: 'line',
+                                    yMin: 0,
+                                    yMax: 0,
+                                    borderColor: 'rgba(255, 255, 255, 0.5)',
+                                    borderWidth: 2,
+                                    borderDash: [5, 5]
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Predicted Value', color: '#b0b0b0' },
+                            ticks: { color: '#808080' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Residual', color: '#b0b0b0' },
+                            ticks: { color: '#808080' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        }
+                    }
+                }
+            }));
+
+            // Residuals histogram
+            const ctx2 = document.getElementById('residualsChart').getContext('2d');
+            const { residuals } = regressionResults;
+            const binCount = 12;
+            const minRes = Math.min(...residuals);
+            const maxRes = Math.max(...residuals);
+            const binWidth = (maxRes - minRes) / binCount;
+            const bins = Array(binCount).fill(0);
+            residuals.forEach(r => {
+                const binIdx = Math.min(Math.floor((r - minRes) / binWidth), binCount - 1);
+                bins[binIdx]++;
+            });
+
+            charts.push(new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: bins.map((_, i) => {
+                        const start = minRes + i * binWidth;
+                        return '$' + (start / 1000).toFixed(0) + 'k';
+                    }),
+                    datasets: [{
+                        label: 'Frequency',
+                        data: bins,
+                        backgroundColor: 'rgba(233, 69, 96, 0.6)',
+                        borderColor: 'rgba(233, 69, 96, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Residual', color: '#b0b0b0' },
+                            ticks: { color: '#808080', maxRotation: 45 },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Count', color: '#b0b0b0' },
+                            ticks: { color: '#808080' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        }
+                    }
+                }
+            }));
+
+            // Scatter plots
+            selectedIndependent.slice(0, 4).forEach((col, idx) => {
+                const canvas = document.getElementById(`scatter_${idx}`);
+                if (!canvas) return;
+                
+                const ctx = canvas.getContext('2d');
+                const xData = regressionResults.validRows.map(rowIdx => parseFloat(rawData[rowIdx][col]));
+                
+                charts.push(new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: 'Properties',
+                            data: xData.map((xi, i) => ({ x: xi, y: y[i] })),
+                            backgroundColor: 'rgba(99, 102, 241, 0.6)',
+                            borderColor: 'rgba(99, 102, 241, 1)',
+                            pointRadius: 5,
+                            pointHoverRadius: 7
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: {
+                                title: { display: true, text: col, color: '#b0b0b0' },
+                                ticks: { color: '#808080' },
+                                grid: { color: 'rgba(255,255,255,0.1)' }
+                            },
+                            y: {
+                                title: { display: true, text: selectedDependent, color: '#b0b0b0' },
+                                ticks: { color: '#808080' },
+                                grid: { color: 'rgba(255,255,255,0.1)' }
+                            }
+                        }
+                    }
+                }));
+            });
+        }
+
+        // Matrix operations
+        function transpose(matrix) {
+            return matrix[0].map((_, i) => matrix.map(row => row[i]));
+        }
+
+        function matMul(A, B) {
+            const rowsA = A.length;
+            const colsA = A[0].length;
+            
+            // Handle vector multiplication (B is 1D array)
+            if (!Array.isArray(B[0])) {
+                const result = [];
+                for (let i = 0; i < rowsA; i++) {
+                    result[i] = 0;
+                    for (let k = 0; k < colsA; k++) {
+                        result[i] += A[i][k] * B[k];
+                    }
+                }
+                return result;
+            }
+            
+            const colsB = B[0].length;
+            const result = [];
+            
+            for (let i = 0; i < rowsA; i++) {
+                result[i] = [];
+                for (let j = 0; j < colsB; j++) {
+                    result[i][j] = 0;
+                    for (let k = 0; k < colsA; k++) {
+                        result[i][j] += A[i][k] * B[k][j];
+                    }
+                }
+            }
+            return result;
+        }
+
+        function invertMatrix(matrix) {
+            const n = matrix.length;
+            const augmented = matrix.map((row, i) => [...row, ...Array(n).fill(0).map((_, j) => i === j ? 1 : 0)]);
+            
+            for (let i = 0; i < n; i++) {
+                let maxRow = i;
+                for (let k = i + 1; k < n; k++) {
+                    if (Math.abs(augmented[k][i]) > Math.abs(augmented[maxRow][i])) {
+                        maxRow = k;
+                    }
+                }
+                [augmented[i], augmented[maxRow]] = [augmented[maxRow], augmented[i]];
+                
+                const pivot = augmented[i][i];
+                if (Math.abs(pivot) < 1e-10) {
+                    throw new Error('SINGULAR_MATRIX');
+                }
+                
+                for (let j = 0; j < 2 * n; j++) {
+                    augmented[i][j] /= pivot;
+                }
+                
+                for (let k = 0; k < n; k++) {
+                    if (k !== i) {
+                        const factor = augmented[k][i];
+                        for (let j = 0; j < 2 * n; j++) {
+                            augmented[k][j] -= factor * augmented[i][j];
+                        }
+                    }
+                }
+            }
+            
+            return augmented.map(row => row.slice(n));
+        }
+
+        function tCDF(t, df) {
+            const x = df / (df + t * t);
+            return 1 - 0.5 * incompleteBeta(df / 2, 0.5, x);
+        }
+
+        function incompleteBeta(a, b, x) {
+            // Regularized incomplete beta function I_x(a, b)
+            if (x <= 0) return 0;
+            if (x >= 1) return 1;
+
+            const lnBeta = lnGamma(a) + lnGamma(b) - lnGamma(a + b);
+
+            // Use symmetry relation when x > (a+1)/(a+b+2) for better convergence
+            if (x > (a + 1) / (a + b + 2)) {
+                return 1 - incompleteBeta(b, a, 1 - x);
+            }
+
+            const front = Math.exp(a * Math.log(x) + b * Math.log(1 - x) - lnBeta);
+
+            // Lentz's continued fraction method
+            // I_x(a,b) = (front / a) * CF where CF is the continued fraction
+            const maxIter = 300;
+            const eps = 1e-14;
+            const tiny = 1e-30;
+
+            // Continued fraction coefficients for I_x(a, b)
+            // Using the standard CF expansion
+            let f = 1, c = 1, d = 1 - (a + b) * x / (a + 1);
+            if (Math.abs(d) < tiny) d = tiny;
+            d = 1 / d;
+            f = d;
+
+            for (let m = 1; m <= maxIter; m++) {
+                // Even step: d_{2m}
+                let numerator = m * (b - m) * x / ((a + 2 * m - 1) * (a + 2 * m));
+                d = 1 + numerator * d;
+                if (Math.abs(d) < tiny) d = tiny;
+                c = 1 + numerator / c;
+                if (Math.abs(c) < tiny) c = tiny;
+                d = 1 / d;
+                f *= d * c;
+
+                // Odd step: d_{2m+1}
+                numerator = -(a + m) * (a + b + m) * x / ((a + 2 * m) * (a + 2 * m + 1));
+                d = 1 + numerator * d;
+                if (Math.abs(d) < tiny) d = tiny;
+                c = 1 + numerator / c;
+                if (Math.abs(c) < tiny) c = tiny;
+                d = 1 / d;
+                const delta = d * c;
+                f *= delta;
+
+                if (Math.abs(delta - 1) < eps) break;
+            }
+
+            return front * f / a;
+        }
+
+        function lnGamma(z) {
+            const c = [76.18009172947146, -86.50532032941677, 24.01409824083091,
+                      -1.231739572450155, 0.001208650973866179, -0.000005395239384953];
+            let sum = 1.000000000190015;
+            for (let i = 0; i < 6; i++) sum += c[i] / (z + i + 1);
+            return Math.log(2.5066282746310005 * sum / z) - (z + 5.5) + (z + 0.5) * Math.log(z + 5.5);
+        }
+
+        function formatNumber(num) {
+            if (Math.abs(num) >= 1000) {
+                return num.toLocaleString(undefined, { maximumFractionDigits: 0 });
+            } else if (Math.abs(num) >= 1) {
+                return num.toFixed(2);
+            } else {
+                return num.toFixed(4);
+            }
+        }
+
+        function formatCurrency(num) {
+            const sign = num < 0 ? '-' : '+';
+            const abs = Math.abs(num);
+            if (abs >= 1000) {
+                return sign + '$' + abs.toLocaleString(undefined, { maximumFractionDigits: 0 });
+            } else if (abs >= 1) {
+                return sign + '$' + abs.toFixed(2);
+            } else {
+                return sign + '$' + abs.toFixed(4);
+            }
+        }
+
+        function formatPValue(p) {
+            if (p < 0.001) return '< 0.001 ***';
+            if (p < 0.01) return p.toFixed(3) + ' **';
+            if (p < 0.05) return p.toFixed(3) + ' *';
+            return p.toFixed(3);
+        }
+
+        // Export functions
+        function exportWorkFile() {
+            const content = document.getElementById('workfilePreview').textContent;
+            downloadFile(content, `work_file_${generateAnalysisId()}.txt`, 'text/plain');
+        }
+
+        function exportReport() {
+            const methodology = document.getElementById('methodologyText').textContent;
+            const results = document.getElementById('resultsText').textContent;
+            const adjustments = document.getElementById('adjustmentsText').textContent;
+            const conclusion = document.getElementById('conclusionText').textContent;
+            
+            const { beta, rSquared, n, p } = regressionResults;
+
+            let report = `
+REGRESSION ANALYSIS REPORT
+==========================
+${analysisSetup.appraiserName}
+${formatDate(analysisSetup.effectiveDate)}
+
+PROPERTY TYPE: ${analysisSetup.propertyType}
+MARKET AREA: ${analysisSetup.marketArea}
+
+--------------------------------------------------------------------------------
+METHODOLOGY
+--------------------------------------------------------------------------------
+${methodology}
+
+--------------------------------------------------------------------------------
+RESULTS
+--------------------------------------------------------------------------------
+${results}
+
+Regression Equation:
+${selectedDependent} = ${formatNumber(beta[0])}${selectedIndependent.map((col, i) => {
+    const sign = beta[i + 1] >= 0 ? ' + ' : ' - ';
+    return `${sign}${formatNumber(Math.abs(beta[i + 1]))} × ${col}`;
+}).join('')}
+
+--------------------------------------------------------------------------------
+ADJUSTMENT SUPPORT
+--------------------------------------------------------------------------------
+${adjustments}
+
+--------------------------------------------------------------------------------
+CONCLUSION
+--------------------------------------------------------------------------------
+${conclusion}
+
+--------------------------------------------------------------------------------
+Analysis ID: ${generateAnalysisId()}
+Generated: ${new Date().toLocaleString()}
+`;
+
+            downloadFile(report, `regression_report_${generateAnalysisId()}.txt`, 'text/plain');
+        }
+
+        function exportCSV() {
+            const { predictions, residuals, validRows } = regressionResults;
+            
+            let csv = headers.join(',') + ',Predicted_' + selectedDependent + ',Residual\n';
+            
+            validRows.forEach((rowIdx, i) => {
+                const row = rawData[rowIdx];
+                csv += headers.map(h => `"${row[h]}"`).join(',');
+                csv += ',' + predictions[i].toFixed(2) + ',' + residuals[i].toFixed(2) + '\n';
+            });
+
+            downloadFile(csv, `regression_data_${generateAnalysisId()}.csv`, 'text/csv');
+        }
+
+        function downloadFile(content, filename, type) {
+            const blob = new Blob([content], { type });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function resetAnalysis() {
+            rawData = [];
+            headers = [];
+            numericColumns = [];
+            selectedDependent = null;
+            selectedIndependent = [];
+            regressionResults = null;
+            analysisSetup = {};
+            charts.forEach(c => c.destroy());
+            charts = [];
+
+            // Reset form
+            requiredFields.forEach(f => document.getElementById(f).value = '');
+            document.getElementById('effectiveDate').valueAsDate = new Date();
+            document.getElementById('licenseNumber').value = '';
+            document.getElementById('dateRange').value = '';
+            document.getElementById('additionalNotes').value = '';
+            document.getElementById('dataVerified').checked = false;
+            proceedBtn.disabled = true;
+            document.getElementById('setupHint').textContent = 'Complete required fields to continue';
+            document.getElementById('setupHint').style.color = '#808080';
+
+            uploadArea.classList.remove('hidden');
+            dataPreview.classList.add('hidden');
+            uploadCard.classList.add('hidden');
+            variableCard.classList.add('hidden');
+            resultsCard.classList.add('hidden');
+            fileInput.value = '';
+            selectionHint.style.color = '#808080';
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
