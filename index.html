@@ -2437,8 +2437,15 @@
             const adjRSquaredPct = (adjRSquared * 100).toFixed(1);
             let modelQuality = rSquared > 0.8 ? 'excellent' : rSquared > 0.6 ? 'good' : rSquared > 0.4 ? 'moderate' : 'limited';
             
-            document.getElementById('resultsText').textContent = 
-                `The regression model demonstrates ${modelQuality} explanatory power with an R-squared of ${rSquaredPct}% (Adjusted R-squared: ${adjRSquaredPct}%), indicating that approximately ${rSquaredPct}% of the variation in ${displayName(selectedDependent).toLowerCase()} can be explained by the selected property characteristics. The model is based on ${n} observations and ${p} predictor variable${p > 1 ? 's' : ''}. These results provide statistically supported evidence for the adjustments applied in the sales comparison approach.`;
+            let resultsSummary;
+            if (rSquared < 0.15) {
+                resultsSummary = `The regression model demonstrates ${modelQuality} explanatory power with an R-squared of ${rSquaredPct}% (Adjusted R-squared: ${adjRSquaredPct}%), indicating that the selected variables explain very little of the variation in ${displayName(selectedDependent).toLowerCase()}. The model is based on ${n} observations and ${p} predictor variable${p > 1 ? 's' : ''}. These results suggest that the selected variables are not reliable predictors of ${displayName(selectedDependent).toLowerCase()} in this market area. The appraiser should consider alternative analytical methods such as paired sales analysis, or select different property characteristics that may better explain market behavior. This model does NOT provide sufficient statistical support for market-derived adjustments.`;
+            } else if (rSquared < 0.4) {
+                resultsSummary = `The regression model demonstrates ${modelQuality} explanatory power with an R-squared of ${rSquaredPct}% (Adjusted R-squared: ${adjRSquaredPct}%), indicating that approximately ${rSquaredPct}% of the variation in ${displayName(selectedDependent).toLowerCase()} can be explained by the selected property characteristics. The model is based on ${n} observations and ${p} predictor variable${p > 1 ? 's' : ''}. While the model captures some market relationships, significant unexplained variation remains. Results should be used cautiously and supplemented with paired sales analysis or other market support before relying on these adjustments.`;
+            } else {
+                resultsSummary = `The regression model demonstrates ${modelQuality} explanatory power with an R-squared of ${rSquaredPct}% (Adjusted R-squared: ${adjRSquaredPct}%), indicating that approximately ${rSquaredPct}% of the variation in ${displayName(selectedDependent).toLowerCase()} can be explained by the selected property characteristics. The model is based on ${n} observations and ${p} predictor variable${p > 1 ? 's' : ''}. These results provide statistically supported evidence for the adjustments applied in the sales comparison approach.`;
+            }
+            document.getElementById('resultsText').textContent = resultsSummary;
 
             // Adjustments Support with confidence intervals
             const df = n - p - 1;
@@ -2470,9 +2477,16 @@
             }
             document.getElementById('adjustmentsText').textContent = adjText;
 
-            // Conclusion
-            document.getElementById('conclusionText').textContent = 
-                `Based on this regression analysis, the adjustments applied in the sales comparison approach are supported by market data from the ${analysisSetup.marketArea} area. The statistical methodology provides an objective, replicable basis for the adjustments, consistent with USPAP requirements for credible appraisal results. The complete methodology, data, and calculations are retained in the appraiser's work file and are available for review upon request.`;
+            // Conclusion — adapt based on model quality
+            let conclusionText;
+            if (rSquared < 0.15) {
+                conclusionText = `Based on this regression analysis, the selected property characteristics do not demonstrate a statistically meaningful relationship with ${displayName(selectedDependent).toLowerCase()} in the ${analysisSetup.marketArea} area. The appraiser should not rely on these results for adjustment support. Alternative methods — including paired sales analysis, qualitative analysis, or selection of different variables — are recommended to develop credible, market-supported adjustments consistent with USPAP Standards Rule 1-1(a). The complete methodology, data, and calculations are retained in the appraiser's work file.`;
+            } else if (rSquared < 0.4) {
+                conclusionText = `Based on this regression analysis, the selected variables show some relationship with ${displayName(selectedDependent).toLowerCase()} in the ${analysisSetup.marketArea} area, but the model's limited explanatory power means these results should be used as supplementary support only. The appraiser should reconcile these findings with paired sales analysis and local market knowledge to develop fully credible adjustment conclusions consistent with USPAP requirements. The complete methodology, data, and calculations are retained in the appraiser's work file.`;
+            } else {
+                conclusionText = `Based on this regression analysis, the adjustments applied in the sales comparison approach are supported by market data from the ${analysisSetup.marketArea} area. The statistical methodology provides an objective, replicable basis for the adjustments, consistent with USPAP requirements for credible appraisal results. The complete methodology, data, and calculations are retained in the appraiser's work file and are available for review upon request.`;
+            }
+            document.getElementById('conclusionText').textContent = conclusionText;
         }
 
         function generateWorkFile() {
